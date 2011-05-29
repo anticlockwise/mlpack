@@ -1,5 +1,7 @@
 package com.mlpack;
 
+import java.util.Set;
+
 public class Event {
     private FeatureSet features;
 
@@ -28,5 +30,21 @@ public class Event {
 
     public void addCount(int count) {
         this.count += count;
+    }
+
+    public String getOutcome() {
+        return outcome;
+    }
+
+    public Set<String> getFeatureNames() {
+        return features.getFeatureNames();
+    }
+
+    public FeatureSet getFeatureSet() {
+        return features;
+    }
+
+    public Set<Feature> getFeatures() {
+        return features.getFeatures();
     }
 }
