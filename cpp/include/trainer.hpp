@@ -23,6 +23,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 #include "prior.hpp"
+#include "index.hpp"
 
 using namespace std;
 using namespace boost::property_tree;
@@ -30,7 +31,7 @@ using namespace boost::property_tree;
 template <typename T>
 class Trainer {
     public:
-        virtual T train(EventSpace events, ptree config);
+        virtual T train(DataIndexer &di, Prior &prior, ptree config) = 0;
 };
 
 #endif

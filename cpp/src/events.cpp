@@ -18,6 +18,33 @@
 
 #include "events.hpp"
 
+Event RealValueFileEventStream::next() {
+    string outcome;
+    FeatureSet features;
+    Feature feat;
+    Event event;
+
+    boost::char_separator<char> sep(" ");
+    tokenizer tok(line, sep);
+    tokenizer::iterator it = tok.begin();
+    outcome = (*it);
+    it++;
+    while (it != tok.end()) {
+        string context = (*it);
+        size_t ind = context.find("=");
+        feat.name = context.substr(0, ind);
+        if (ind != string::npos) {
+            feat.value = strtod(context.substr(ind+1).c_str(), NULL);
+        }
+        it++;
+        features.put(feat);
+    }
+
+    event.outcome = outcome;
+    event.context = features;
+    event.count = 1;
+}
+
 bool cmp_event(const Event &e1, const Event &e2) {
     bool equals = true;
 

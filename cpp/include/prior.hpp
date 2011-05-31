@@ -29,17 +29,19 @@ using namespace std;
 
 class Prior {
     public:
-        virtual void log_prior(map<string, double> dist, FeatureSet &context) = 0;
+        virtual void log_prior(vector<double> &dist, FeatureSet &context) = 0;
+
+        virtual void set_labels(vector<string> outcome_labels, vector<string> pred_labels) = 0;
 };
 
 class UniformPrior : public Prior {
-    vector<string> outcomes;
+    int n_outcomes;
     double r;
 
     public:
-        UniformPrior(vector<string> o);
+        void log_prior(vector<double> &dist, FeatureSet &context);
 
-        void log_prior(map<string, double> dist, FeatureSet &context);
+        void set_labels(vector<string> outcome_labels, vector<string> pred_labels);
 };
 
 #endif

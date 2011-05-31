@@ -1,1 +1,3 @@
-Program("maxent", Glob("src/*.cpp"))
+env = Environment(CPPPATH = ["include"], LIBS="boost_unit_test_framework")
+env.Program("maxent", Glob("src/*.cpp"))
+env.Program("tests", Glob("test/*.cpp"))

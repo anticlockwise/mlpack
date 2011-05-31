@@ -18,14 +18,18 @@
 #ifndef GISTRAINER_H
 #define GISTRAINER_H
 
+#include <iostream>
+#include <vector>
+#include <boost/property_tree/ptree.hpp>
 #include "trainer.hpp"
 #include "index.hpp"
+#include "model.hpp"
+#include "params.hpp"
 
 const double NEAR_ZERO = 0.01;
 const double LL_THRESHOLD = 0.0001;
 
-class GISModel {
-};
+typedef vector<vector<double> > Matrix;
 
 class GISTrainer : public Trainer<GISModel> {
     bool use_simple_smoothing;
@@ -54,7 +58,19 @@ class GISTrainer : public Trainer<GISModel> {
 
     vector<string> pred_labels;
 
+    vector<int> pred_counts;
+
+    vector<int> num_feats;
+
+    vector<Parameters> params;
+
+    vector<Parameters> model_expects;
+
+    vector<Parameters> observed_expects;
+
     Prior *prior;
+
+    MaxentParameters *eval_params;
 
     public:
     GISTrainer() {
@@ -63,9 +79,20 @@ class GISTrainer : public Trainer<GISModel> {
         use_gaussian_smoothing = false;
         sigma = 2.0;
         smoothing_observation = 0.1;
+        prior = NULL;
     }
 
-    GISModel train(EventSpace events, ptree pt);
+    GISModel train(DataIndexer &di, Prior *prior, ptree config);
+
+    private:
+    void update(Parameters &p, vector<int> outcomes, int n_active_outcomes) {
+        p.outcomes = outcomes;
+        vector<double> params(n_active_outcomes);
+        p.params = params;
+    }
+
+    void find_params(int iterations, int corr_constant);
+    double next_iteration(int corr_constant);
 };
 
 #endif

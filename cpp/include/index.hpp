@@ -18,6 +18,7 @@
 #ifndef DATAINDEXER_H
 #define DATAINDEXER_H
 
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <algorithm>
@@ -46,7 +47,7 @@ class BaseDataIndexer : public DataIndexer {
         vector<int> pcounts;
         int num_events;
 
-        int sort_n_merge(EventSpace elist, bool s) {
+        int sort_n_merge(EventSpace &elist, bool s) {
             int num_uniq_events = 1;
             num_events = elist.size();
             if (num_events <= 1)
@@ -82,11 +83,41 @@ class BaseDataIndexer : public DataIndexer {
             return num_uniq_events;
         }
 
+        void update(FeatureSet context, map<string, int> &pred_index,
+                map<string, int> &counter, int cutoff) {
+            FeatureIterator it;
+            FeatureMap feat_map = context.feat_map;
+            for (it = feat_map.begin(); it != feat_map.end(); it++) {
+                string feat_name = it->first;
+                if (counter.find(feat_name) == counter.end()) {
+                    counter[feat_name] = 1;
+                } else {
+                    counter[feat_name] += 1;
+                }
+
+                Feature &feat = it->second;
+                if (pred_index.find(feat_name) == pred_index.end()
+                        && counter[feat_name] >= cutoff) {
+                    int ind = pred_index.size();
+                    pred_index[feat_name] = ind;
+                }
+            }
+        }
+
     public:
         EventSpace contexts();
         vector<string> pred_labels();
         vector<string> outcome_labels();
         vector<int> pred_counts();
+};
+
+class OnePassDataIndexer : public BaseDataIndexer {
+    public:
+        OnePassDataIndexer(EventStream &stream, int cutoff=0, bool _sort=true);
+
+    private:
+        EventSpace compute_event_counts(EventStream &stream,
+                map<string, int> &pred_index, int cutoff);
 };
 
 #endif

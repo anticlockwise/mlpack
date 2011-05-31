@@ -18,15 +18,16 @@
 
 #include "prior.hpp"
 
-UniformPrior::UniformPrior(vector<string> o) {
-    outcomes = o;
-    int n_outcomes = outcomes.size();
-    r = log(1.0 / n_outcomes);
+void UniformPrior::log_prior(vector<double> &dist, FeatureSet &context) {
+    dist.resize(n_outcomes);
+    int i;
+    for (i = 0; i < n_outcomes; i++) {
+        dist[i] = r;
+    }
 }
 
-void UniformPrior::log_prior(map<string, double> dist, FeatureSet &context) {
-    vector<string>::iterator it;
-    for (it = outcomes.begin(); it != outcomes.end(); it++) {
-        dist[*it] = r;
-    }
+void UniformPrior::set_labels(vector<string> outcome_labels,
+        vector<string> pred_labels) {
+    int n_outcomes = outcome_labels.size();
+    r = log(1.0 / n_outcomes);
 }

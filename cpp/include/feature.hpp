@@ -33,23 +33,38 @@ typedef map<string, Feature>::iterator FeatureIterator;
 struct Feature {
     string name;
     double value;
+    int id;
 
     Feature() {
         name = "";
         value = 0.0;
+        id = -1;
     }
 
     Feature (string n, double v) {
         name = n;
         value = v;
+        id = -1;
     }
 };
 
 struct FeatureSet {
     FeatureMap feat_map;
 
+    void put(Feature feat) {
+        feat_map[feat.name] = feat;
+    }
+
     Feature get(string name) {
         return feat_map[name];
+    }
+
+    FeatureIterator begin() {
+        return feat_map.begin();
+    }
+
+    FeatureIterator end() {
+        return feat_map.end();
     }
 
     FeatureIterator find(string name) {
