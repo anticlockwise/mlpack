@@ -23,7 +23,10 @@ GISModel GISTrainer::train(DataIndexer &di, Prior *p, ptree pt) {
     contexts = di.contexts();
     pred_counts = di.pred_counts();
     n_uniq_events = contexts.size();
-    prior = p;
+
+    if (p != NULL) {
+        prior = p;
+    }
 
     int corr_constant = 1;
     EventSpace::iterator it;

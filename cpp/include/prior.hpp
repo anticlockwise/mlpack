@@ -28,6 +28,7 @@
 using namespace std;
 
 class Prior {
+
     public:
         virtual void log_prior(vector<double> &dist, FeatureSet &context) = 0;
 
@@ -39,9 +40,9 @@ class UniformPrior : public Prior {
     double r;
 
     public:
-        void log_prior(vector<double> &dist, FeatureSet &context);
+    void log_prior(vector<double> &dist, FeatureSet &context);
 
-        void set_labels(vector<string> outcome_labels, vector<string> pred_labels);
+    void set_labels(vector<string> outcome_labels, vector<string> pred_labels);
 };
 
 #endif

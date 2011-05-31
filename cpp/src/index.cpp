@@ -18,7 +18,7 @@
 
 #include "index.hpp"
 
-vector<Event> BaseDataIndexer::contexts() {
+EventSpace BaseDataIndexer::contexts() {
     return events;
 }
 
@@ -36,7 +36,6 @@ vector<int> BaseDataIndexer::pred_counts() {
 
 OnePassDataIndexer::OnePassDataIndexer(EventStream &stream, int cutoff, bool _sort) {
     map<string, int> pred_index;
-    EventSpace events;
 
     cout << "Indexing events using cutoff " << cutoff << endl;
     cout << "Computing event counts and indexing..." << endl;
@@ -59,7 +58,8 @@ EventSpace OnePassDataIndexer::compute_event_counts(EventStream &stream,
         update(ev.context, pred_index, counter, cutoff);
 
         if (oindex.find(ev.outcome) == oindex.end()) {
-            oindex[ev.outcome] = oindex.size();
+            int ind = oindex.size();
+            oindex[ev.outcome] = ind;
         }
 
         ev.oid = oindex[ev.outcome];
@@ -74,9 +74,11 @@ EventSpace OnePassDataIndexer::compute_event_counts(EventStream &stream,
                 new_set.put(f);
             }
         }
-        ev.context = new_set;
 
-        events.push_back(ev);
+        if (new_set.size() > 0) {
+            ev.context = new_set;
+            events.push_back(ev);
+        }
     }
 
     pcounts.resize(pred_index.size());

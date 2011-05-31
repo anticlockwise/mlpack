@@ -79,7 +79,7 @@ class GISTrainer : public Trainer<GISModel> {
         use_gaussian_smoothing = false;
         sigma = 2.0;
         smoothing_observation = 0.1;
-        prior = NULL;
+        prior = new UniformPrior();
     }
 
     GISModel train(DataIndexer &di, Prior *prior, ptree config);

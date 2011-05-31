@@ -45,20 +45,22 @@ class BaseDataIndexer : public DataIndexer {
         vector<string> plabels;
         vector<string> olabels;
         vector<int> pcounts;
-        int num_events;
+        int n_events;
 
-        int sort_n_merge(EventSpace &elist, bool s) {
+        int sort_n_merge(EventSpace elist, bool s) {
             int num_uniq_events = 1;
-            num_events = elist.size();
-            if (num_events <= 1)
+            n_events = elist.size();
+            if (n_events <= 1)
                 return num_uniq_events;
 
             if (s) {
                 EventSpace uniq_events;
 
                 sort(elist.begin(), elist.end(), cmp_event);
+                cout << "Sorted." << endl;
+
                 EventSpace::iterator eit = elist.begin();
-                eit++;
+                ++eit;
 
                 Event eprev = elist[0];
                 uniq_events.push_back(eprev);
@@ -70,13 +72,14 @@ class BaseDataIndexer : public DataIndexer {
                     } else {
                         uniq_events.push_back(ecur);
                         num_uniq_events++;
+                        eprev = ecur;
                     }
-                    eprev = ecur;
+                    ++eit;
                 }
 
                 events = uniq_events;
             } else {
-                num_uniq_events = num_events;
+                num_uniq_events = n_events;
                 events = elist;
             }
 
@@ -109,6 +112,9 @@ class BaseDataIndexer : public DataIndexer {
         vector<string> pred_labels();
         vector<string> outcome_labels();
         vector<int> pred_counts();
+        int num_events() {
+            return n_events;
+        }
 };
 
 class OnePassDataIndexer : public BaseDataIndexer {

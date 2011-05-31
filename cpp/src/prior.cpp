@@ -28,6 +28,6 @@ void UniformPrior::log_prior(vector<double> &dist, FeatureSet &context) {
 
 void UniformPrior::set_labels(vector<string> outcome_labels,
         vector<string> pred_labels) {
-    int n_outcomes = outcome_labels.size();
+    n_outcomes = outcome_labels.size();
     r = log(1.0 / n_outcomes);
 }

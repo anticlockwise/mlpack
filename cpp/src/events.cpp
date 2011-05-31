@@ -65,5 +65,10 @@ bool cmp_event(const Event &e1, const Event &e2) {
             }
         }
     }
+
+    if (e1.outcome != e2.outcome) {
+        equals = false;
+    }
+
     return equals;
 }
