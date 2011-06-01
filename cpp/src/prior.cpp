@@ -16,18 +16,21 @@
  * =====================================================================================
  */
 
-#include "prior.hpp"
+#include <mlpack/prior.hpp>
 
-void UniformPrior::log_prior(vector<double> &dist, FeatureSet &context) {
-    dist.resize(n_outcomes);
-    int i;
-    for (i = 0; i < n_outcomes; i++) {
-        dist[i] = r;
+//BOOST_SERIALIZATION_ASSUME_ABSTRACT(Prior)
+BOOST_CLASS_EXPORT(UniformPrior);
+
+    void UniformPrior::log_prior(vector<double> &dist, FeatureSet &context) {
+        dist.resize(n_outcomes);
+        int i;
+        for (i = 0; i < n_outcomes; i++) {
+            dist[i] = r;
+        }
     }
-}
 
-void UniformPrior::set_labels(vector<string> outcome_labels,
-        vector<string> pred_labels) {
-    n_outcomes = outcome_labels.size();
-    r = log(1.0 / n_outcomes);
-}
+    void UniformPrior::set_labels(vector<string> outcome_labels,
+            vector<string> pred_labels) {
+        n_outcomes = outcome_labels.size();
+        r = log(1.0 / n_outcomes);
+    }

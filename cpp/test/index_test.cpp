@@ -23,8 +23,8 @@
 
 #include <boost/test/unit_test.hpp>
 #include <fstream>
-#include <events.hpp>
-#include <index.hpp>
+#include <mlpack/events.hpp>
+#include <mlpack/index.hpp>
 
 using namespace std;
 

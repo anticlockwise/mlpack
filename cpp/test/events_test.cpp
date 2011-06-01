@@ -21,11 +21,11 @@
 #define BOOST_TEST_MODULE Main
 #endif
 
-#include <feature.hpp>
+#include <mlpack/events.hpp>
+#include <mlpack/feature.hpp>
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <events.hpp>
 #include <boost/test/unit_test.hpp>
 
 using namespace std;

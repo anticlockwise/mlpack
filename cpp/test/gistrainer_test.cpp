@@ -25,9 +25,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <fstream>
-#include <events.hpp>
-#include <index.hpp>
-#include <gistrainer.hpp>
+#include <mlpack/events.hpp>
+#include <mlpack/index.hpp>
+#include <mlpack/gistrainer.hpp>
 
 using namespace std;
 using boost::property_tree::ptree;

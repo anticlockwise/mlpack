@@ -1,6 +1,6 @@
 from SCons.Node.FS import find_file
 
-env = Environment(CPPPATH = ["include"], LIBS="boost_unit_test_framework-mt")
+env = Environment(CPPPATH = ["include"], LIBS=["boost_unit_test_framework-mt", "boost_program_options-mt", "boost_serialization-mt"])
 env.Program("maxent", Glob("src/*.cpp"))
 
 test_sources = Glob("test/*.cpp")

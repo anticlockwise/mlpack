@@ -22,16 +22,16 @@
 #include <vector>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
-#include "prior.hpp"
-#include "index.hpp"
+#include <mlpack/prior.hpp>
+#include <mlpack/index.hpp>
 
 using namespace std;
 using namespace boost::property_tree;
 
-template <typename T>
-class Trainer {
-    public:
-        virtual T train(DataIndexer &di, Prior *prior, ptree config) = 0;
-};
+    template <typename T>
+        class Trainer {
+            public:
+                virtual T train(DataIndexer &di, Prior *prior, ptree config) = 0;
+        };
 
 #endif

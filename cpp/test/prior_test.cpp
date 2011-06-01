@@ -23,7 +23,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <fstream>
-#include <prior.hpp>
+#include <mlpack/prior.hpp>
 #include <cmath>
 
 using namespace std;
