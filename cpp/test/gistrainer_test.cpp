@@ -22,18 +22,25 @@
 #endif
 
 #include <boost/test/unit_test.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 #include <fstream>
 #include <events.hpp>
 #include <index.hpp>
 #include <gistrainer.hpp>
 
 using namespace std;
+using boost::property_tree::ptree;
 
 BOOST_AUTO_TEST_SUITE(gistrainer_test_suite)
 
 BOOST_AUTO_TEST_CASE(gistrainer_test) {
-    FileEventStream fes("test/test_events1");
+    RealValueFileEventStream fes("test/real-valued-training-data.txt");
     OnePassDataIndexer indexer(fes, 1, true);
+    ptree pt;
+    read_ini("test/test_conf.ini", pt);
+    GISTrainer trainer;
+    trainer.train(indexer, NULL, pt);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

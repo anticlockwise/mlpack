@@ -47,7 +47,7 @@ class GISModel : public Model {
     public:
         GISModel(vector<Parameters> params, vector<string> pls, vector<string> ols) {
             prior = new UniformPrior();
-            maxent_params = new MaxentParameters(params, 0.0, 1.0, ols.size());
+            maxent_params = new MaxentParameters(&params, 0.0, 1.0, ols.size());
             olabels = ols;
         }
 
@@ -58,7 +58,7 @@ class GISModel : public Model {
 
         static vector<double> eval(FeatureSet context, vector<double> &prior,
                 MaxentParameters model) {
-            vector<Parameters> params = model.params;
+            vector<Parameters> params = (*model.params);
             vector<int> n_feats(model.n_outcomes);
             vector<int> active_outcomes;
             vector<double> active_params;

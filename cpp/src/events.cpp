@@ -36,13 +36,15 @@ Event RealValueFileEventStream::next() {
         if (ind != string::npos) {
             feat.value = strtod(context.substr(ind+1).c_str(), NULL);
         }
-        it++;
+        ++it;
         features.put(feat);
     }
 
     event.outcome = outcome;
     event.context = features;
     event.count = 1;
+
+    return event;
 }
 
 bool cmp_event(const Event &e1, const Event &e2) {
@@ -51,17 +53,21 @@ bool cmp_event(const Event &e1, const Event &e2) {
     FeatureMap fmap1 = e1.context.feat_map;
     FeatureMap fmap2 = e2.context.feat_map;
     FeatureIterator fit;
-    for (fit = fmap1.begin(); fit != fmap1.end(); fit++) {
-        string name = (*fit).first;
-        if (fmap2.find(name) == fmap2.end()) {
-            equals = false;
-            break;
-        } else {
-            Feature &f1 = fmap1[name];
-            Feature &f2 = fmap2[name];
-            if (f1.value != f2.value) {
+    if (fmap1.size() != fmap2.size()) {
+        equals = false;
+    } else {
+        for (fit = fmap1.begin(); fit != fmap1.end(); fit++) {
+            string name = (*fit).first;
+            if (fmap2.find(name) == fmap2.end()) {
                 equals = false;
                 break;
+            } else {
+                Feature &f1 = fmap1[name];
+                Feature &f2 = fmap2[name];
+                if (f1.value != f2.value) {
+                    equals = false;
+                    break;
+                }
             }
         }
     }

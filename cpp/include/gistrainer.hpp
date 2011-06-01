@@ -82,13 +82,17 @@ class GISTrainer : public Trainer<GISModel> {
         prior = new UniformPrior();
     }
 
+    ~GISTrainer() {
+        delete prior;
+    }
+
     GISModel train(DataIndexer &di, Prior *prior, ptree config);
 
     private:
-    void update(Parameters &p, vector<int> outcomes, int n_active_outcomes) {
-        p.outcomes = outcomes;
+    void update(Parameters *p, vector<int> outcomes, int n_active_outcomes) {
+        p->outcomes = outcomes;
         vector<double> params(n_active_outcomes);
-        p.params = params;
+        p->params = params;
     }
 
     void find_params(int iterations, int corr_constant);

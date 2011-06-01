@@ -31,7 +31,7 @@ using namespace boost::property_tree;
 template <typename T>
 class Trainer {
     public:
-        virtual T train(DataIndexer &di, Prior &prior, ptree config) = 0;
+        virtual T train(DataIndexer &di, Prior *prior, ptree config) = 0;
 };
 
 #endif

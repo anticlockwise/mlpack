@@ -18,8 +18,11 @@
 #include "gistrainer.hpp"
 
 GISModel GISTrainer::train(DataIndexer &di, Prior *p, ptree pt) {
-    int iterations = pt.get<int>("iterations");
-    cutoff = pt.get<int>("cutoff");
+    int iterations = pt.get<int>("maxent.iterations");
+    cutoff = pt.get<int>("maxent.cutoff");
+
+    cout << "Incorporating indexed data for training..." << endl;
+
     contexts = di.contexts();
     pred_counts = di.pred_counts();
     n_uniq_events = contexts.size();
@@ -43,11 +46,17 @@ GISModel GISTrainer::train(DataIndexer &di, Prior *p, ptree pt) {
         }
     }
 
+    cout << "done." << endl;
+
     outcome_labels = di.outcome_labels();
     pred_labels = di.pred_labels();
     n_outcomes = outcome_labels.size();
     n_preds = pred_labels.size();
     prior->set_labels(outcome_labels, pred_labels);
+
+    cout << "\tNumber of predicates: " << n_preds << endl;
+    cout << "\t    Number of events: " << n_uniq_events << endl;
+    cout << "\t  Number of outcomes: " << n_outcomes << endl;
 
     Matrix pred_count(n_preds, vector<double>(n_outcomes));
     int ei = 0, pi = 0, oi = 0;
@@ -102,24 +111,23 @@ GISModel GISTrainer::train(DataIndexer &di, Prior *p, ptree pt) {
             }
         }
 
-        Parameters &p = params[pi];
-        update(p, outcome_pattern, n_active_outcomes);
-        p = model_expects[pi];
-        update(p, outcome_pattern, n_active_outcomes);
-        p = observed_expects[pi];
-        update(p, outcome_pattern, n_active_outcomes);
+        // cout << "Active outcomes: " << n_active_outcomes << endl;
+        update(&params[pi], outcome_pattern, n_active_outcomes);
+        update(&model_expects[pi], outcome_pattern, n_active_outcomes);
+        update(&observed_expects[pi], outcome_pattern, n_active_outcomes);
 
+        Parameters *pa;
         for (aoi = 0; aoi < n_active_outcomes; aoi++) {
             oi = outcome_pattern[aoi];
-            p = params[pi];
-            p.params[aoi] = 0.0;
-            p = model_expects[pi];
-            p.params[aoi] = 0.0;
-            p = observed_expects[pi];
+            pa = &params[pi];
+            pa->set(aoi, 0.0);
+            pa = &model_expects[pi];
+            pa->set(aoi, 0.0);
+            pa = &observed_expects[pi];
             if (pred_count[pi][oi] > 0) {
-                p.params[aoi] = pred_count[pi][oi];
+                pa->set(aoi, pred_count[pi][oi]);
             } else if (use_simple_smoothing) {
-                p.params[aoi] = smoothing_observation;
+                pa->set(aoi, smoothing_observation);
             }
         }
     }
@@ -129,8 +137,14 @@ GISModel GISTrainer::train(DataIndexer &di, Prior *p, ptree pt) {
 
     num_feats.resize(n_outcomes);
 
-    eval_params = new MaxentParameters(params, 0.0, 1.0, n_outcomes);
+    cout << "...done." << endl;
+    eval_params = new MaxentParameters(&params, 0.0, 1.0, n_outcomes);
+    cout << "Computing model parameters..." << endl;
     find_params(iterations, corr_constant);
+
+    GISModel model(params, pred_labels, outcome_labels);
+
+    return model;
 }
 
 void GISTrainer::find_params(int iterations, int corr_constant) {
@@ -139,12 +153,15 @@ void GISTrainer::find_params(int iterations, int corr_constant) {
     int i;
 
     for (i = 0; i < iterations; i++) {
+        cout << (i + 1) << ":  ";
         curr_ll = next_iteration(corr_constant);
         if (i > 0) {
             if (prev_ll > curr_ll) {
+                cout << "Model Diverging: loglikelihood decreased" << endl;
                 break;
             }
             if (curr_ll - prev_ll < LL_THRESHOLD) {
+                cout << "Model Diverged." << endl;
                 break;
             }
         }
@@ -160,8 +177,9 @@ double GISTrainer::next_iteration(int corr_constant) {
     EventSpace::iterator eit;
     for (eit = contexts.begin(); eit != contexts.end(); eit++) {
         Event ev = (*eit);
+
         prior->log_prior(model_dist, ev.context);
-        GISModel::eval(ev.context, model_dist, *eval_params);
+        model_dist = GISModel::eval(ev.context, model_dist, *eval_params);
 
         FeatureSet fset = ev.context;
         FeatureIterator fit;
@@ -172,15 +190,25 @@ double GISTrainer::next_iteration(int corr_constant) {
                 int aoi, n_ao = active_outcomes.size();
                 for (aoi = 0; aoi < n_ao; aoi++) {
                     int oi = active_outcomes[aoi];
-                    Parameters &p = model_expects[f.id];
-                    p.update(aoi, model_dist[oi] * f.value * ev.count);
+                    Parameters *p = &model_expects[f.id];
+                    p->update(aoi, model_dist[oi] * f.value * ev.count);
                 }
             }
         }
 
         ll += log(model_dist[ev.oid]) * ev.count;
         n_events += ev.count;
+        int max = 0, oi;
+        for (oi = 1; oi < n_outcomes; oi++) {
+            if (model_dist[oi] > model_dist[max])
+                max = oi;
+        }
+        if (max == ev.oid) {
+            n_correct += ev.count;
+        }
     }
+
+    cout << ".";
 
     int pi, aoi, n_out;
     vector<double> observed;
@@ -190,6 +218,7 @@ double GISTrainer::next_iteration(int corr_constant) {
         observed = observed_expects[pi].params;
         model = model_expects[pi].params;
         outcomes = params[pi].outcomes;
+        n_out = outcomes.size();
         for (aoi = 0; aoi < n_out; aoi++) {
             if (use_gaussian_smoothing) {
 
@@ -201,6 +230,7 @@ double GISTrainer::next_iteration(int corr_constant) {
             model_expects[pi].set(aoi, 0.0);
         }
     }
+    cout << ". loglikelihood=" << ll << "\t" << ((double)n_correct/n_events) << endl;
 
     return ll;
 }

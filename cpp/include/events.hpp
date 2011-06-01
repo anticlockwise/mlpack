@@ -111,6 +111,7 @@ class FileEventStream : public EventStream {
 
 class RealValueFileEventStream : public FileEventStream {
     public:
+        RealValueFileEventStream(string fname): FileEventStream(fname) {}
         Event next();
 };
 

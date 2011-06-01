@@ -41,17 +41,27 @@ struct Parameters {
     void update(int oi, double param) {
         params[oi] += param;
     }
+
+    void print() {
+        size_t n = params.size();
+        int i;
+        cout << n << ": ";
+        for (i = 0; i < n; i++) {
+            cout << " " << params[i];
+        }
+        cout << endl;
+    }
 };
 
 class MaxentParameters {
     public:
-        vector<Parameters> params;
+        vector<Parameters> *params;
         int n_outcomes;
         double corr_constant;
         double const_inverse;
         double corr_param;
 
-        MaxentParameters(vector<Parameters> ps, double corr_p,
+        MaxentParameters(vector<Parameters> *ps, double corr_p,
                 double corr_const, int n_out) {
             params = ps;
             corr_param = corr_p;
