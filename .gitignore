@@ -1,2 +1,5 @@
 *.swp
 *.class
+*.o
+maxent
+tests
