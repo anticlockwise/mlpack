@@ -26,6 +26,7 @@
 #include <mlpack/model.hpp>
 #include <mlpack/params.hpp>
 
+namespace mlpack {
     const double NEAR_ZERO = 0.01;
     const double LL_THRESHOLD = 0.0001;
 
@@ -94,5 +95,6 @@
         void find_params(int iterations, int corr_constant);
         double next_iteration(int corr_constant);
     };
+}
 
 #endif

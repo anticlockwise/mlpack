@@ -19,8 +19,9 @@
 #include <mlpack/prior.hpp>
 
 //BOOST_SERIALIZATION_ASSUME_ABSTRACT(Prior)
-BOOST_CLASS_EXPORT(UniformPrior);
+BOOST_CLASS_EXPORT(mlpack::UniformPrior);
 
+namespace mlpack {
     void UniformPrior::log_prior(vector<double> &dist, FeatureSet &context) {
         dist.resize(n_outcomes);
         int i;
@@ -34,3 +35,4 @@ BOOST_CLASS_EXPORT(UniformPrior);
         n_outcomes = outcome_labels.size();
         r = log(1.0 / n_outcomes);
     }
+}

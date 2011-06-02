@@ -25,6 +25,7 @@
 
 using namespace std;
 
+namespace mlpack {
     struct Feature;
 
     typedef map<string, Feature> FeatureMap;
@@ -75,5 +76,6 @@ using namespace std;
             return feat_map.size();
         }
     };
+}
 
 #endif

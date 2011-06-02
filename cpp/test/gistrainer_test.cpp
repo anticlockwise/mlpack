@@ -30,6 +30,7 @@
 #include <mlpack/gistrainer.hpp>
 
 using namespace std;
+using namespace mlpack;
 using boost::property_tree::ptree;
 
 BOOST_AUTO_TEST_SUITE(gistrainer_test_suite)

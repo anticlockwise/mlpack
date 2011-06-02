@@ -17,8 +17,9 @@
  */
 #include <mlpack/model.hpp>
 
-BOOST_CLASS_EXPORT(GISModel)
+BOOST_CLASS_EXPORT(mlpack::GISModel)
 
+namespace mlpack {
     vector<double> GISModel::eval(FeatureSet context) {
         vector<double> dist(olabels.size());
         prior->log_prior(dist, context);
@@ -55,3 +56,4 @@ BOOST_CLASS_EXPORT(GISModel)
             return -1;
         }
     }
+}

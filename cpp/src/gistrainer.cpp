@@ -17,6 +17,7 @@
  */
 #include <mlpack/gistrainer.hpp>
 
+namespace mlpack {
     GISModel GISTrainer::train(DataIndexer &di, Prior *p, ptree pt) {
         int iterations = pt.get<int>("maxent.iterations", 15);
         cutoff = pt.get<int>("maxent.cutoff", 1);
@@ -236,3 +237,4 @@
 
         return ll;
     }
+}

@@ -28,10 +28,12 @@
 using namespace std;
 using namespace boost::property_tree;
 
+namespace mlpack {
     template <typename T>
         class Trainer {
             public:
                 virtual T train(DataIndexer &di, Prior *prior, ptree config) = 0;
         };
+}
 
 #endif

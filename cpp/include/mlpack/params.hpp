@@ -25,6 +25,7 @@
 
 using namespace std;
 
+namespace mlpack {
     class Parameters {
         private:
             friend class boost::serialization::access;
@@ -94,5 +95,6 @@ using namespace std;
                 n_outcomes = n_out;
             }
     };
+}
 
 #endif

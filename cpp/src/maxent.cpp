@@ -34,6 +34,7 @@
 #include <fstream>
 
 using namespace std;
+using namespace mlpack;
 using boost::property_tree::ptree;
 namespace po = boost::program_options;
 

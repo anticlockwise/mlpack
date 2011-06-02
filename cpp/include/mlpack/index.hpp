@@ -26,6 +26,7 @@
 
 using namespace std;
 
+namespace mlpack {
     class DataIndexer {
         public:
             virtual EventSpace contexts() = 0;
@@ -125,5 +126,6 @@ using namespace std;
             EventSpace compute_event_counts(EventStream &stream,
                     map<string, int> &pred_index, int cutoff);
     };
+}
 
 #endif

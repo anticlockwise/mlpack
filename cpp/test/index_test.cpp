@@ -27,6 +27,7 @@
 #include <mlpack/index.hpp>
 
 using namespace std;
+using namespace mlpack;
 
 BOOST_AUTO_TEST_SUITE(index_test_suite)
 

@@ -29,6 +29,7 @@
 #include <boost/test/unit_test.hpp>
 
 using namespace std;
+using namespace mlpack;
 
 BOOST_AUTO_TEST_SUITE(events_test_suite)
 

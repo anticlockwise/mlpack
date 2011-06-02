@@ -33,6 +33,7 @@
 
 using namespace std;
 
+namespace mlpack {
     class Model {
         private:
             friend class boost::serialization::access;
@@ -135,5 +136,6 @@ using namespace std;
             int index (string out);
             int pred_index(string pred);
     };
+}
 
 #endif

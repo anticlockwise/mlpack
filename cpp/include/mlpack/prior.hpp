@@ -31,6 +31,7 @@
 
 using namespace std;
 
+namespace mlpack {
     class Prior {
         private:
             friend class boost::serialization::access;
@@ -64,5 +65,6 @@ using namespace std;
 
             void set_labels(vector<string> outcome_labels, vector<string> pred_labels);
     };
+}
 
 #endif

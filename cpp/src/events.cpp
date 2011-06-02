@@ -18,6 +18,16 @@
 
 #include <mlpack/events.hpp>
 
+namespace mlpack {
+    Event SequenceEventStream::next() {
+        return *eit;
+    }
+
+    void SequenceEventStream::add_event(Event ev) {
+        events.push_back(ev);
+        eit = events.begin();
+    }
+
     Event FileEventStream::next() {
         string outcome;
         FeatureSet features;
@@ -149,3 +159,4 @@
 
         return equals;
     }
+}

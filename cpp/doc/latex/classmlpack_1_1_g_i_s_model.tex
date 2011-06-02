@@ -1,0 +1,87 @@
+\hypertarget{classmlpack_1_1_g_i_s_model}{
+\section{mlpack::GISModel Class Reference}
+\label{classmlpack_1_1_g_i_s_model}\index{mlpack::GISModel@{mlpack::GISModel}}
+}
+Inheritance diagram for mlpack::GISModel:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classmlpack_1_1_g_i_s_model}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_a70b5617bb746965a114ce53f40994f97}{
+{\bfseries GISModel} (vector$<$ \hyperlink{classmlpack_1_1_parameters}{Parameters} $>$ params, vector$<$ string $>$ pls, vector$<$ string $>$ ols, \hyperlink{classmlpack_1_1_prior}{Prior} $\ast$p)}
+\label{classmlpack_1_1_g_i_s_model_a70b5617bb746965a114ce53f40994f97}
+
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_a20df804c3af48f04a5064b01121eb241}{
+vector$<$ double $>$ {\bfseries eval} (\hyperlink{structmlpack_1_1_feature_set}{FeatureSet} context)}
+\label{classmlpack_1_1_g_i_s_model_a20df804c3af48f04a5064b01121eb241}
+
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_ae231a7276c7b42cf82205570c1d6ecd9}{
+string {\bfseries best\_\-outcome} (vector$<$ double $>$ outcomes)}
+\label{classmlpack_1_1_g_i_s_model_ae231a7276c7b42cf82205570c1d6ecd9}
+
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_a1c288157a87919c02c75cc7f3d60dca8}{
+string {\bfseries outcome} (int i)}
+\label{classmlpack_1_1_g_i_s_model_a1c288157a87919c02c75cc7f3d60dca8}
+
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_afa224d21ba44eb9a5a47e2f9d75e0ad9}{
+int {\bfseries index} (string out)}
+\label{classmlpack_1_1_g_i_s_model_afa224d21ba44eb9a5a47e2f9d75e0ad9}
+
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_a6a7fe5c4c7d8808cdaa55ad793135872}{
+int {\bfseries pred\_\-index} (string pred)}
+\label{classmlpack_1_1_g_i_s_model_a6a7fe5c4c7d8808cdaa55ad793135872}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_a9aa802dd7a6e98fe771cda2da611982c}{
+static vector$<$ double $>$ {\bfseries eval} (\hyperlink{structmlpack_1_1_feature_set}{FeatureSet} context, vector$<$ double $>$ \&prior, \hyperlink{classmlpack_1_1_maxent_parameters}{MaxentParameters} model)}
+\label{classmlpack_1_1_g_i_s_model_a9aa802dd7a6e98fe771cda2da611982c}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_a1f75f3fbb76b7e38ed81f5a1b9387d1e}{
+vector$<$ string $>$ {\bfseries olabels}}
+\label{classmlpack_1_1_g_i_s_model_a1f75f3fbb76b7e38ed81f5a1b9387d1e}
+
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_a610ca84b801a2a91d63374b2d0d8871b}{
+map$<$ string, int $>$ {\bfseries pmap}}
+\label{classmlpack_1_1_g_i_s_model_a610ca84b801a2a91d63374b2d0d8871b}
+
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_ae9f9e8d5dab18d55bd90d2afb0b4d487}{
+\hyperlink{classmlpack_1_1_maxent_parameters}{MaxentParameters} $\ast$ {\bfseries maxent\_\-params}}
+\label{classmlpack_1_1_g_i_s_model_ae9f9e8d5dab18d55bd90d2afb0b4d487}
+
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_a9a2e28ae8bc7f625aeda3985d660d716}{
+\hyperlink{classmlpack_1_1_prior}{Prior} $\ast$ {\bfseries prior}}
+\label{classmlpack_1_1_g_i_s_model_a9a2e28ae8bc7f625aeda3985d660d716}
+
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classmlpack_1_1_g_i_s_model_ac98d07dd8f7b70e16ccb9a01abf56b9c}{
+class {\bfseries boost::serialization::access}}
+\label{classmlpack_1_1_g_i_s_model_ac98d07dd8f7b70e16ccb9a01abf56b9c}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file:\begin{DoxyCompactItemize}
+\item 
+include/mlpack/model.hpp\end{DoxyCompactItemize}

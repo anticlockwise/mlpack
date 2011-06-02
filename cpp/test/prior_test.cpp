@@ -27,6 +27,7 @@
 #include <cmath>
 
 using namespace std;
+using namespace mlpack;
 
 BOOST_AUTO_TEST_SUITE(prior_test_suite)
 

@@ -18,6 +18,7 @@
 
 #include <mlpack/index.hpp>
 
+namespace mlpack {
     EventSpace BaseDataIndexer::contexts() {
         return events;
     }
@@ -100,3 +101,4 @@
 
         return events;
     }
+}

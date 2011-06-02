@@ -31,6 +31,10 @@ using namespace std;
 typedef boost::tokenizer<boost::char_separator<char> > 
 tokenizer;
 
+namespace mlpack {
+    /** For representing an event instance in the training data.
+     *  An event consists of an outcome and a list of features (context).
+     */
     struct Event {
         FeatureSet context;
 
@@ -56,6 +60,9 @@ tokenizer;
 
     typedef vector<Event> EventSpace;
 
+    /** Represents a stream of events, used to read events to the
+     *  indexer.
+     */
     class EventStream {
         public:
             EventStream() {}
@@ -63,6 +70,23 @@ tokenizer;
             virtual Event next() = 0;
 
             virtual bool has_next() = 0;
+    };
+
+    class SequenceEventStream : public EventStream {
+        protected:
+            EventSpace events;
+            EventSpace::iterator eit;
+
+        public:
+            SequenceEventStream() {
+                eit = events.begin();
+            }
+
+            void add_event(Event ev);
+            Event next();
+            bool has_next() {
+                return eit != events.end();
+            }
     };
 
     class FileBasedEventStream : public EventStream {
@@ -113,5 +137,6 @@ tokenizer;
     };
 
     bool cmp_event(const Event &e1, const Event &e2);
+}
 
 #endif
