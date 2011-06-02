@@ -52,38 +52,59 @@ namespace mlpack {
             virtual int pred_index(string pred) = 0;
     };
 
-    class GISModel : public Model {
-        private:
-            friend class boost::serialization::access;
-            template <class Archive>
-                void serialize(Archive &ar, const unsigned int version) {
-                    ar & boost::serialization::base_object<Model>(*this);
-                    ar & olabels;
-                    ar & pmap;
-                    ar & maxent_params;
-                    ar & prior;
-                }
-
+    class BaseModel : public Model {
+        friend class boost::serialization::access;
+        template <class Archive>
+            void serialize(Archive &ar, const unsigned int version) {
+                ar & boost::serialization::base_object<Model>(*this);
+                ar & olabels;
+                ar & pmap;
+            }
         protected:
             vector<string> olabels;
             map<string, int> pmap;
-            MaxentParameters *maxent_params;
-            Prior *prior;
 
         public:
-            GISModel() {
-                prior = NULL;
-                maxent_params = NULL;
-            }
+            BaseModel() {}
 
-            GISModel(vector<Parameters> params, vector<string> pls, vector<string> ols, Prior *p) {
-                prior = p;
-                maxent_params = new MaxentParameters(params, 0.0, 1.0, ols.size());
+            BaseModel(vector<string> ols, vector<string> pls) {
                 olabels = ols;
                 int n = pls.size(), i;
                 for (i = 0; i < n; i++) {
                     pmap[pls[i]] = i;
                 }
+            }
+
+            string best_outcome(vector<double> outcomes);
+            string outcome(int i);
+            int index (string out);
+            int pred_index(string pred);
+    };
+
+    class MaxentModel : public BaseModel {
+        private:
+            friend class boost::serialization::access;
+            template <class Archive>
+                void serialize(Archive &ar, const unsigned int version) {
+                    ar & boost::serialization::base_object<BaseModel>(*this);
+                    ar & maxent_params;
+                    ar & prior;
+                }
+
+        protected:
+            MaxentParameters *maxent_params;
+            Prior *prior;
+
+        public:
+            MaxentModel() {
+                prior = NULL;
+                maxent_params = NULL;
+            }
+
+            MaxentModel(vector<Parameters> params, vector<string> pls,
+                    vector<string> ols, Prior *p): BaseModel(ols, pls) {
+                prior = p;
+                maxent_params = new MaxentParameters(params, 0.0, 1.0, ols.size());
             }
 
             static vector<double> eval(FeatureSet context, vector<double> &prior,
@@ -131,10 +152,6 @@ namespace mlpack {
             }
 
             vector<double> eval(FeatureSet context);
-            string best_outcome(vector<double> outcomes);
-            string outcome(int i);
-            int index (string out);
-            int pred_index(string pred);
     };
 }
 

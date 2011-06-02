@@ -26,13 +26,15 @@
 #include <mlpack/model.hpp>
 #include <mlpack/params.hpp>
 
+using boost::property_tree::ptree;
+using namespace std;
+
 namespace mlpack {
     const double NEAR_ZERO = 0.01;
-    const double LL_THRESHOLD = 0.0001;
 
     typedef vector<vector<double> > Matrix;
 
-    class GISTrainer : public Trainer<GISModel> {
+    class GISTrainer : public Trainer<MaxentModel> {
         bool use_simple_smoothing;
 
         bool use_slack_param;
@@ -44,6 +46,8 @@ namespace mlpack {
         double smoothing_observation;
 
         double cf_observed_expect;
+
+        double tolerance;
 
         int n_uniq_events;
 
@@ -80,10 +84,13 @@ namespace mlpack {
             use_gaussian_smoothing = false;
             sigma = 2.0;
             smoothing_observation = 0.1;
-            prior = new UniformPrior();
+            tolerance = 0.0001;
+            prior = NULL;
         }
 
-        GISModel train(DataIndexer &di, Prior *prior, ptree config);
+        MaxentModel train(DataIndexer &di, ptree config);
+
+        void set_heldout_data(EventSpace events);
 
         private:
         void update(Parameters *p, vector<int> outcomes, int n_active_outcomes) {

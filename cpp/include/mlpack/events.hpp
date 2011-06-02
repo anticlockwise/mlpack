@@ -28,8 +28,7 @@
 
 using namespace std;
 
-typedef boost::tokenizer<boost::char_separator<char> > 
-tokenizer;
+typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 namespace mlpack {
     /** For representing an event instance in the training data.

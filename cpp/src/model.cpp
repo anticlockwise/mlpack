@@ -17,24 +17,10 @@
  */
 #include <mlpack/model.hpp>
 
-BOOST_CLASS_EXPORT(mlpack::GISModel)
+BOOST_CLASS_EXPORT(mlpack::MaxentModel)
 
 namespace mlpack {
-    vector<double> GISModel::eval(FeatureSet context) {
-        vector<double> dist(olabels.size());
-        prior->log_prior(dist, context);
-        return GISModel::eval(context, dist, *maxent_params);
-    }
-
-    int GISModel::pred_index(string pred) {
-        if (pmap.find(pred) != pmap.end()) {
-            return pmap[pred];
-        } else {
-            return -1;
-        }
-    }
-
-    string GISModel::best_outcome(vector<double> outcomes) {
+    string BaseModel::best_outcome(vector<double> outcomes) {
         int best = 0;
         int i, n = outcomes.size();
         for (i = 1; i < n; i++) {
@@ -44,16 +30,30 @@ namespace mlpack {
         return olabels[best];
     }
 
-    string GISModel::outcome(int i) {
+    string BaseModel::outcome(int i) {
         return olabels[i];
     }
 
-    int GISModel::index(string out) {
+    int BaseModel::index(string out) {
         vector<string>::iterator it = find(olabels.begin(), olabels.end(), out);
         if (it != olabels.end()) {
             return it - olabels.begin();
         } else {
             return -1;
         }
+    }
+
+    int BaseModel::pred_index(string pred) {
+        if (pmap.find(pred) != pmap.end()) {
+            return pmap[pred];
+        } else {
+            return -1;
+        }
+    }
+
+    vector<double> MaxentModel::eval(FeatureSet context) {
+        vector<double> dist(olabels.size());
+        prior->log_prior(dist, context);
+        return MaxentModel::eval(context, dist, *maxent_params);
     }
 }

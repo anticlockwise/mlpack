@@ -1,12 +1,12 @@
 /*
  * =====================================================================================
  *
- *       Filename:  trainer.hpp
+ *       Filename:  lbfgstrainer.hpp
  *
  *    Description:  
  *
  *        Version:  1.0
- *        Created:  05/30/2011 12:59:43
+ *        Created:  02/06/11 10:27:01
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -16,26 +16,23 @@
  * =====================================================================================
  */
 
-#ifndef TRAINER_H
-#define TRAINER_H
-
-#include <vector>
 #include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/info_parser.hpp>
-#include <mlpack/prior.hpp>
+#include <mlpack/trainer.hpp>
 #include <mlpack/index.hpp>
+#include <mlpack/prior.hpp>
+#include <mlpack/model.hpp>
+#include <mlpack/events.hpp>
+#include <vector>
+#include <iostream>
 
 using namespace std;
-using namespace boost::property_tree;
+using boost::property_tree::ptree;
 
 namespace mlpack {
-    template <typename T>
-        class Trainer {
-            public:
-                virtual T train(DataIndexer &di, ptree config) = 0;
+    class LBFGSTrainer : public Trainer<MaxentModel> {
+        public:
+            MaxentModel train(DataIndexer &di, ptree config);
 
-                virtual void set_heldout_data(EventSpace events) = 0;
-        };
+            void set_heldout_data(EventSpace events);
+    };
 }
-
-#endif

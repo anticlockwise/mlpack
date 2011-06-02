@@ -45,6 +45,7 @@ int main(int argc, char** argv) {
         ("config,c", po::value<string>(), "Configuration file")
         ("feature_type,f", po::value<string>(), "Type of feature values: real,binary  default:binary")
         ("train,t", "Training instead of prediction")
+        ("validation-file,v", po::value<string>(), "File containing validation data/heldout events")
         ("input-file,i", po::value<string>(), "Input training/prediction data file")
         ("model-file,m", po::value<string>(), "Output model file");
 
@@ -69,6 +70,11 @@ int main(int argc, char** argv) {
         cout << "maxent [-options] <input_file>" << endl;
         cout << desc << endl;
         return 1;
+    }
+
+    string heldout_file;
+    if (vm.count("validation-file")) {
+        heldout_file = vm["validation-file"].as<string>();
     }
 
     string out_file;
@@ -106,10 +112,10 @@ int main(int argc, char** argv) {
         bool sort = pt.get<bool>("maxent.sort", true);
         OnePassDataIndexer di(*stream, cutoff, sort);
         GISTrainer trainer;
-        GISModel model = trainer.train(di, NULL, pt);
+        MaxentModel model = trainer.train(di, pt);
         oa << model;
     } else {
-        GISModel model;
+        MaxentModel model;
         ifstream ifs(out_file.c_str());
         boost::archive::text_iarchive ia(ifs);
         ia >> model;

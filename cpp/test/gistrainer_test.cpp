@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(gistrainer_test) {
     ptree pt;
     read_ini("test/test_conf.ini", pt);
     GISTrainer trainer;
-    trainer.train(indexer, NULL, pt);
+    trainer.train(indexer, pt);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

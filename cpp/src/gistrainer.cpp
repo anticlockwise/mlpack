@@ -18,9 +18,25 @@
 #include <mlpack/gistrainer.hpp>
 
 namespace mlpack {
-    GISModel GISTrainer::train(DataIndexer &di, Prior *p, ptree pt) {
+    void GISTrainer::set_heldout_data(EventSpace events) {
+
+    }
+
+    MaxentModel GISTrainer::train(DataIndexer &di, ptree pt) {
+        // Initialize parameters from configuration file
         int iterations = pt.get<int>("maxent.iterations", 15);
         cutoff = pt.get<int>("maxent.cutoff", 1);
+        string prior_type = pt.get<string>("maxent.gis.prior", "uniform");
+        use_simple_smoothing = pt.get<bool>("maxent.gis.simple_smoothing", false);
+        smoothing_observation = pt.get<double>("maxent.gis.smoothing_observation", 0.1);
+        use_gaussian_smoothing = pt.get<bool>("maxent.gis.guassian_smoothing", false);
+        use_slack_param = pt.get<bool>("maxent.gis.slack_param", false);
+        sigma = pt.get<double>("maxent.gis.sigma", 2.0);
+        tolerance = pt.get<double>("maxent.gis.tolerance", 0.0001);
+
+        if (prior_type == "uniform") {
+            prior = new UniformPrior();
+        }
 
         cout << "Incorporating indexed data for training..." << endl;
 
@@ -28,10 +44,7 @@ namespace mlpack {
         pred_counts = di.pred_counts();
         n_uniq_events = contexts.size();
 
-        if (p != NULL) {
-            prior = p;
-        }
-
+        // Determine correction constant
         int corr_constant = 1;
         EventSpace::iterator it;
         for (it = contexts.begin(); it != contexts.end(); it++) {
@@ -53,12 +66,16 @@ namespace mlpack {
         pred_labels = di.pred_labels();
         n_outcomes = outcome_labels.size();
         n_preds = pred_labels.size();
+        // Initialize prior distribution
         prior->set_labels(outcome_labels, pred_labels);
 
         cout << "\tNumber of predicates: " << n_preds << endl;
         cout << "\t    Number of events: " << n_uniq_events << endl;
         cout << "\t  Number of outcomes: " << n_outcomes << endl;
 
+        // Initialize predicate/outcome frequence table
+        // pred_count: predicate/outcome frequency table - how many times a predicate
+        // has been seen with a particular outcome
         Matrix pred_count(n_preds, vector<double>(n_outcomes));
         int ei = 0, pi = 0, oi = 0;
         for (; pi < n_preds; pi++) {
@@ -67,6 +84,7 @@ namespace mlpack {
             }
         }
 
+        // Populate predicate/outcome frequency table
         ei = pi = oi = 0;
         FeatureIterator fit;
         FeatureSet fset;
@@ -112,7 +130,7 @@ namespace mlpack {
                 }
             }
 
-            // cout << "Active outcomes: " << n_active_outcomes << endl;
+            // Initilize parameters for predicate pi
             update(&params[pi], outcome_pattern, n_active_outcomes);
             update(&model_expects[pi], outcome_pattern, n_active_outcomes);
             update(&observed_expects[pi], outcome_pattern, n_active_outcomes);
@@ -143,7 +161,7 @@ namespace mlpack {
         cout << "Computing model parameters..." << endl;
         find_params(iterations, corr_constant);
 
-        GISModel model(params, pred_labels, outcome_labels, prior);
+        MaxentModel model(params, pred_labels, outcome_labels, prior);
 
         return model;
     }
@@ -162,7 +180,7 @@ namespace mlpack {
                     cout << "Model Diverging: loglikelihood decreased" << endl;
                     break;
                 }
-                if (curr_ll - prev_ll < LL_THRESHOLD) {
+                if (curr_ll - prev_ll < tolerance) {
                     cout << "Model Diverged." << endl;
                     break;
                 }
@@ -181,7 +199,7 @@ namespace mlpack {
             Event ev = (*eit);
 
             prior->log_prior(model_dist, ev.context);
-            model_dist = GISModel::eval(ev.context, model_dist, *eval_params);
+            model_dist = MaxentModel::eval(ev.context, model_dist, *eval_params);
 
             FeatureSet fset = ev.context;
             FeatureIterator fit;
