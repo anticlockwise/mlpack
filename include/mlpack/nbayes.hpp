@@ -47,11 +47,19 @@ namespace mlpack {
 
         friend class boost::serialization::access;
         template <class Archive>
-        void serialize(Archive &ar, const unsigned int version) {
-            ar & boost::serialization::base_object<BaseModel>(*this);
-            ar & priors;
-            ar & dist_type;
-            ar & params;
+            void serialize(Archive &ar, const unsigned int version) {
+                ar & boost::serialization::base_object<BaseModel>(*this);
+                ar & priors;
+                ar & dist_type;
+                ar & params;
+            }
+
+        shared_ptr<Distribution> init_distribution(string type) {
+            if (type == "gaussian") {
+                return shared_ptr<Distribution>(new GaussianDistribution);
+            } else {
+                return shared_ptr<Distribution>(new UniformDistribution);
+            }
         }
 
         public:

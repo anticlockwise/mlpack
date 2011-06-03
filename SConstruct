@@ -6,9 +6,11 @@ maxent = common + ["src/prior.cpp", "src/gistrainer.cpp", "src/lbfgstrainer.cpp"
 nbayes = common + ["src/nbayes.cpp", "src/probs.cpp"]
 env = Environment(CPPPATH = ["include"], LIBS=["boost_unit_test_framework-mt", "boost_program_options-mt", "boost_serialization-mt"])
 env.Program("maxent", maxent)
-#env.Program("nbayes", nbayes)
+env.Program("nbayes", nbayes)
+
+main_sources = ["maxent.cpp", "nbayes.cpp"]
 
 test_sources = Glob("test/*.cpp")
 test_sources.extend(Glob("src/*.cpp"))
-test_sources = filter(lambda f: f.name != "maxent.cpp", test_sources)
+test_sources = filter(lambda f: f.name not in main_sources, test_sources)
 env.Program("tests", test_sources)
