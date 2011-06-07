@@ -27,13 +27,19 @@
 #include <boost/serialization/export.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/property_tree/ptree.hpp>
+
 #include <vector>
 #include <map>
+#include <iostream>
+#include <string>
+#include <fstream>
+
 #include <mlpack/events.hpp>
 #include <mlpack/probs.hpp>
 #include <mlpack/trainer.hpp>
 #include <mlpack/index.hpp>
 #include <mlpack/model.hpp>
+#include <mlpack/command.hpp>
 
 using namespace std;
 using boost::property_tree::ptree;
@@ -97,6 +103,21 @@ namespace mlpack {
         NaiveBayesModel train(DataIndexer &di, ptree config);
 
         void set_heldout_data(EventSpace events);
+    };
+
+    class NaiveBayesCommand : public MLCommand {
+        private:
+            shared_ptr<NaiveBayesTrainer> trainer;
+            NaiveBayesModel model;
+
+        public:
+            NaiveBayesCommand() {
+                cmd_name = "nbayes";
+            }
+
+            void init_trainer();
+            void save_model(string fname, DataIndexer &di, ptree config);
+            Model &load_model(string fname);
     };
 }
 
