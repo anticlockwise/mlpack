@@ -52,6 +52,16 @@ namespace mlpack {
     struct FeatureSet {
         FeatureMap feat_map;
 
+        map<string, double> attrs;
+
+        void put_attr(string n, double a) {
+            attrs[n] = a;
+        }
+
+        double get_attr(string n) {
+            return attrs[n];
+        }
+
         void put(Feature feat) {
             feat_map[feat.name] = feat;
         }
@@ -74,6 +84,16 @@ namespace mlpack {
 
         size_t size() {
             return feat_map.size();
+        }
+
+        double length_sq() {
+            double l = 0.0;
+            FeatureIterator fit;
+            for (fit = feat_map.begin(); fit != feat_map.end(); fit++) {
+                Feature &f = fit->second;
+                l += f.value * f.value;
+            }
+            return l;
         }
     };
 }

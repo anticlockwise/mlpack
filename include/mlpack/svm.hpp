@@ -24,13 +24,85 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/shared_ptr.hpp>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 using boost::property_tree::ptree;
 using boost::shared_ptr;
 
 namespace mlpack {
+    double cross_prod(shared_ptr<FeatureSet>, shared_ptr<FeatureSet>);
+
+    class Kernel {
+        public:
+            virtual double eval(shared_ptr<FeatureSet>, shared_ptr<FeatureSet>) = 0;
+    };
+
+    class LinearKernel : public Kernel {
+        public:
+            double eval(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2);
+    };
+
+    class PolynomialKernel : public Kernel {
+        private:
+            double lin_coef; // Linear coefficient a
+            double const_coef; // Constant coefficient b
+            double poly_degree; // Polynomial degree
+
+        public:
+            PolynomialKernel(double l, double c, double p) {
+                lin_coef = l;
+                const_coef = c;
+                poly_degree = p;
+            }
+
+            double eval(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2);
+    };
+
+    class RadialKernel : public Kernel {
+        private:
+            double rbf_gamma;
+
+        public:
+            RadialKernel(double r) {
+                rbf_gamma = r;
+            }
+
+            double eval(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2);
+    };
+
+    class SigmoidNeuralKernel : public Kernel {
+        private:
+            double lin_coef; // Linear coefficient a
+            double const_coef; // Constant coefficient b
+
+        public:
+            SigmoidNeuralKernel(double l, double c) {
+                lin_coef = l;
+                const_coef = c;
+            }
+
+            double eval(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2);
+    };
+
+    class SVMParameters {
+        public:
+            int type; // Classification/Regression
+            double c; // upper bound C on alphas
+            double eps; // Regression epsilon
+            double cost_ratio; // Factor to multiply C for positive examples
+            bool biased_hyperplane;
+            bool shared_slack;
+            long iterations;
+            vector<double> alphas;
+            vector<double> costs;
+    };
+
     class SVMModel : public BaseModel {
+        private:
+            int kernel_type;
+            vector<double> alpha;
+
         public:
             vector<double> eval(FeatureSet context);
 

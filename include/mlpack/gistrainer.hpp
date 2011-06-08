@@ -99,7 +99,7 @@ namespace mlpack {
             p->params = params;
         }
 
-        void find_params(int iterations, int corr_constant);
+        void find_params(long iterations, int corr_constant);
         double next_iteration(int corr_constant);
     };
 }

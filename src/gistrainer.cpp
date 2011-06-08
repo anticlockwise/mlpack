@@ -24,7 +24,7 @@ namespace mlpack {
 
     MaxentModel GISTrainer::train(DataIndexer &di, ptree pt) {
         // Initialize parameters from configuration file
-        int iterations = pt.get<int>("maxent.iterations", 15);
+        long iterations = pt.get<long>("maxent.iterations", 15);
         cutoff = pt.get<int>("maxent.cutoff", 1);
         string prior_type = pt.get<string>("maxent.gis.prior", "uniform");
         use_simple_smoothing = pt.get<bool>("maxent.gis.simple_smoothing", false);
@@ -166,10 +166,10 @@ namespace mlpack {
         return model;
     }
 
-    void GISTrainer::find_params(int iterations, int corr_constant) {
+    void GISTrainer::find_params(long iterations, int corr_constant) {
         double prev_ll = 0.0;
         double curr_ll = 0.0;
-        int i;
+        long i;
 
         cout << "Performing " << iterations << " iterations" << endl;
         for (i = 0; i < iterations; i++) {
