@@ -71,6 +71,7 @@ namespace mlpack {
                             Event &e = uniq_events[num_uniq_events-1];
                             e.count += ecur.count;
                         } else {
+                            ecur.id = num_uniq_events;
                             uniq_events.push_back(ecur);
                             num_uniq_events++;
                             eprev = ecur;
@@ -80,8 +81,16 @@ namespace mlpack {
 
                     events = uniq_events;
                 } else {
+                    int ind = 0;
                     num_uniq_events = n_events;
                     events = elist;
+                    EventSpace::iterator eit = events.begin();
+                    while (eit != events.end()) {
+                        Event &e = (*eit);
+                        e.id = ind;
+                        ind++;
+                        eit++;
+                    }
                 }
 
                 return num_uniq_events;

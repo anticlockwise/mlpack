@@ -35,6 +35,8 @@ namespace mlpack {
      *  An event consists of an outcome and a list of features (context).
      */
     struct Event {
+        int id;
+
         FeatureSet context;
 
         string outcome;

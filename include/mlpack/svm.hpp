@@ -31,6 +31,11 @@ using boost::property_tree::ptree;
 using boost::shared_ptr;
 
 namespace mlpack {
+    const int LINEAR_KERNEL = 0;
+    const int POLYNOMIAL_KERNEL = 1;
+    const int RADIAL_KERNEL = 2;
+    const int SIGMOID_KERNEL = 3;
+
     double cross_prod(shared_ptr<FeatureSet>, shared_ptr<FeatureSet>);
 
     class Kernel {
@@ -112,6 +117,16 @@ namespace mlpack {
     };
 
     class SVMTrainer : public Trainer<SVMModel> {
+        private:
+            shared_ptr<Kernel> kernel;
+
+            shared_ptr<SVMParameters> learn_params;
+
+            void init_params(shared_ptr<SVMParameters> params, ptree &c) {
+                params->c = c.get<double>("svm.C", 1.0);
+                params->cost_ratio = c.get<double>("svm.cost_ratio", 1.0);
+            }
+
         public:
             SVMModel train(DataIndexer &di, ptree config);
 
