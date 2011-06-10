@@ -19,109 +19,143 @@
 #include <mlpack/svm.hpp>
 
 namespace mlpack {
-    double cross_prod(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2) {
-        double sum = 0.0;
-        FeatureIterator fit;
-        for (fit = fset1->begin(); fit != fset1->end(); fit++) {
-            string name = fit->first;
-            if (fset2->find(name) != fset2->end()) {
-                Feature &f1 = fit->second;
-                const Feature &f2 = fset2->get(name);
-                sum += f1.value * f2.value;
+    SVCQMatrix::SVCQMatrix(EventSpace events, shared_ptr<SVMParameters> params): QMatrix(events, params) {
+        contexts = events;
+        int n_events = events.size();
+        int i;
+        qd.reserve(n_events);
+        for (i = 0; i < n_events; i++) {
+            FeatureSet &fset = events[i].context;
+            qd[i] = kernel->eval(fset, fset);
+        }
+    }
+
+    vector<double> SVCQMatrix::get_q(int i , int l) {
+        
+    }
+
+    vector<double> SVCQMatrix::get_qd() {
+        return qd;
+    }
+
+    void Solver::solve(int ne, shared_ptr<QMatrix> q,
+            vector<double> p, EventSpace &events,
+            vector<double> alpha, double c_p, double c_n,
+            double eps, int shrinking) {
+        cp = c_p;
+        cn = c_n;
+        alpha_status.reserve(ne);
+        active_set.reserve(ne);
+        gradient.reserve(ne);
+        g_bar.reserve(ne);
+
+        int i, j;
+        for (i = 0; i < ne; i++) {
+            update_alpha_status(alpha[i], i, events[i].oid);
+            active_set[i] = i;
+            gradient[i] = p[i];
+            g_bar[i] = 0;
+        }
+
+        for (i = 0; i < ne; i++) {
+            if (!is_lower_bound(i)) {
+
             }
         }
-        return sum;
-    }
-
-    double LinearKernel::eval(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2) {
-        return cross_prod(fset1, fset2);
-    }
-
-    double PolynomialKernel::eval(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2) {
-        double sum = cross_prod(fset1, fset2);
-        return pow(lin_coef * sum + const_coef, poly_degree);
-    }
-
-    double RadialKernel::eval(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2) {
-        return exp(-rbf_gamma * (fset1->length_sq() - 2*cross_prod(fset1, fset2) + fset2->length_sq()));
-    }
-
-    double SigmoidNeuralKernel::eval(shared_ptr<FeatureSet> fset1, shared_ptr<FeatureSet> fset2) {
-        double sum = cross_prod(fset1, fset2);
-        return tanh(lin_coef * sum + const_coef);
     }
 
     vector<double> SVMModel::eval(FeatureSet context) {
         
     }
 
-    SVMModel SVMTrainer::train(DataIndexer &di, ptree config) {
-        // 0 - Linear
-        // 1 - Polynomial
-        // 2 - Radial basis
-        // 3 - SigmoidNeural
-        int kernel_type = config.get<int>("svm.kernel", 0);
-        double lin_coef, const_coef, poly_degree, rbf_gamma;
-        switch (kernel_type) {
-            case LINEAR_KERNEL:
-                kernel = shared_ptr<Kernel>(new LinearKernel);
+    void SVMTrainer::group_classes(EventSpace &events, vector<int> &start,
+            vector<int> &count, int n_classes) {
+        EventSpace::iterator eit = events.begin();
+        while (eit != events.end()) {
+            Event &e = (*eit);
+            count[e.oid]++;
+            eit++;
+        }
+
+        int i = 0;
+        start[i] = 0;
+        for (i = 1; i < n_classes; i++) {
+            start[i] = start[i-1] + count[i-1];
+        }
+    }
+
+    DecisionFunction SVMTrainer::train_single_class(EventSpace &subspace,
+            shared_ptr<SVMParameters> params, int wp, int wn) {
+        vector<double> alpha(subspace.size());
+        switch (params->svm_type) {
+            case C_SVC:
                 break;
-            case POLYNOMIAL_KERNEL:
-                lin_coef = config.get<double>("svm.kernel.lin_coef", 0.1);
-                const_coef = config.get<double>("svm.kernel.const_coef", 0.1);
-                poly_degree = config.get<double>("svm.kernel.poly_degree", 1);
-                kernel = shared_ptr<Kernel>(new PolynomialKernel(lin_coef, const_coef, poly_degree));
+            case NU_SVC:
                 break;
-            case RADIAL_KERNEL:
-                rbf_gamma = config.get<double>("svm.kernel.rbf_gammar", 0.1);
-                kernel = shared_ptr<Kernel>(new RadialKernel(rbf_gamma));
+            case ONE_CLASS:
                 break;
-            case SIGMOID_KERNEL:
-                lin_coef = config.get<double>("svm.kernel.lin_coef", 0.1);
-                const_coef = config.get<double>("svm.kernel.const_coef", 0.1);
-                kernel = shared_ptr<Kernel>(new SigmoidNeuralKernel(lin_coef, const_coef));
+            case EPSILON_SVR:
                 break;
-            default:
-                kernel = shared_ptr<Kernel>(new LinearKernel);
+            case NU_SVR:
                 break;
         }
+    }
+
+    SVMModel SVMTrainer::train(DataIndexer &di, ptree config) {
+        SVMModel model;
 
         learn_params = shared_ptr<SVMParameters>(new SVMParameters);
         init_params(learn_params, config);
 
-        EventSpace contexts = di.contexts();
-        int n_events = di.num_events();
-        vector<int> inconsistent(n_events);
-        vector<int> unlabelled(n_events);
-        vector<int> label(n_events);
-        vector<double> alphas(n_events);
-        learn_params->costs.reserve(n_events);
-        int train_pos = 0;
-        int train_neg = 0;
-        int transduction = 0;
+        if (learn_params->svm_type == ONE_CLASS
+                || learn_params->svm_type == EPSILON_SVR
+                || learn_params->svm_type == NU_SVR) {
+            // TODO: To be implemented
+        } else { // Classification
+            vector<string> olabels = di.outcome_labels();
+            int n_classes = olabels.size();
+            vector<double> weighted_c(n_classes);
+            vector<bool> nonzero(di.num_events(), false);
+            EventSpace events = di.contexts();
 
-        EventSpace::iterator cit;
-        for (cit = contexts.begin(); cit != contexts.end(); cit++) {
-            Event &e = (*cit);
-            int outcome = atoi(e.outcome.c_str());
-            inconsistent[e.id] = 0;
+            vector<int> start(n_classes), count(n_classes);
+            sort(events.begin(), events.end(), cmp_outcome);
+            group_classes(events, start, count, n_classes);
 
-            if (outcome == 0) {
-                unlabelled[e.id] = 1;
-                label[e.id] = 0;
-                transduction = 1;
-            } else if (outcome > 0) {
-                learn_params->costs[e.id] = learn_params->c * learn_params->cost_ratio
-                    * e.context.get_attr("cost_factor");
-                label[e.id] = 1;
-                train_pos++;
-            } else if (outcome < 0) {
-                learn_params->costs[e.id] = learn_params->c
-                    * e.context.get_attr("cost_factor");
-                label[e.id] = -1;
-                train_neg++;
-            } else {
-                learn_params->costs[e.id] = 0;
+            int i, j, k;
+            for (i = 0; i < n_classes; i++) {
+                weighted_c[i] = learn_params->c;
+            }
+
+            vector<DecisionFunction> f(n_classes*(n_classes-1)/2);
+            vector<double> probA, probB;
+            if (learn_params->probability == 1) {
+                probA.reserve(n_classes*(n_classes-1)/2);
+                probB.reserve(n_classes*(n_classes-1)/2);
+            }
+
+            int p = 0;
+            for (i = 0; i < n_classes; i++) {
+                for (j = i + 1; j < n_classes; j++) {
+                    EventSpace sub_space;
+                    int si = start[i], sj = start[j];
+                    int ci = count[i], cj = count[j];
+                    sub_space.reserve(ci + cj);
+                    for (k = 0; k < ci; k++) {
+                        sub_space[k] = events[si+k];
+                        sub_space[k].oid = 1;
+                    }
+                    for (k = 0; k < cj; k++) {
+                        sub_space[ci+k] = events[sj+k];
+                        sub_space[ci+k].oid = -1;
+                    }
+
+                    if (learn_params->probability == 1) {
+                        // TODO implement probability calculation
+                    }
+
+                    f[p] = train_single_class(sub_space, learn_params, weighted_c[i], weighted_c[j]);
+                }
             }
         }
     }

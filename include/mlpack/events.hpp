@@ -138,6 +138,8 @@ namespace mlpack {
     };
 
     bool cmp_event(const Event &e1, const Event &e2);
+
+    bool cmp_outcome(const Event &e1, const Event &e2);
 }
 
 #endif

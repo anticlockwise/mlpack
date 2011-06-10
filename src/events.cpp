@@ -128,6 +128,10 @@ namespace mlpack {
         return event;
     }
 
+    bool cmp_outcome(const Event &e1, const Event &e2) {
+        return e1.oid < e2.oid;
+    }
+
     bool cmp_event(const Event &e1, const Event &e2) {
         bool equals = true;
 
