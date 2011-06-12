@@ -135,6 +135,23 @@ namespace mlpack {
             EventSpace compute_event_counts(EventStream &stream,
                     map<string, int> &pred_index, int cutoff);
     };
+
+    class BinaryDataIndexer : public OnePassDataIndexer {
+        public:
+            BinaryDataIndexer(EventStream &stream, int cutoff=0, bool _sort=false):
+                OnePassDataIndexer(stream, cutoff, _sort) {
+                    EventSpace::iterator eit = events.begin();
+                while (eit != events.end()) {
+                    Event &e = (*eit);
+                    if (e.oid == 0) {
+                        e.oid = -1;
+                    } else {
+                        e.oid = 1;
+                    }
+                    eit++;
+                }
+            }
+    };
 }
 
 #endif
