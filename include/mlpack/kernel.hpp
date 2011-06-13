@@ -16,6 +16,9 @@
  * =====================================================================================
  */
 
+#ifndef MLPACK_KERNEL_H
+#define MLPACK_KERNEL_H
+
 #include <mlpack/feature.hpp>
 #include <mlpack/events.hpp>
 #include <vector>
@@ -78,3 +81,5 @@ namespace mlpack {
             double eval(FeatureSet &fset1, FeatureSet &fset2);
     };
 }
+
+#endif

@@ -1,12 +1,12 @@
 /*
  * =====================================================================================
  *
- *       Filename:  cache.hpp
+ *       Filename:  util.cpp
  *
  *    Description:  
  *
  *        Version:  1.0
- *        Created:  06/11/2011 22:52:53
+ *        Created:  13/06/11 12:48:24
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -16,20 +16,12 @@
  * =====================================================================================
  */
 
-#ifndef MLPACK_CACHE_H
-#define MLPACK_CACHE_H
-
-#include <mlpack/qmatrix.hpp>
-
-#include <vector>
-#include <climits>
-#include <cfloat>
-#include <cmath>
-#include <algorithm>
-
-using namespace std;
+#include <mlpack/util.hpp>
 
 namespace mlpack {
+    bool cmp_solution_vector(const SolutionVector &sva, const SolutionVector &svb) {
+        const Event &ea = sva.event;
+        const Event &eb = svb.event;
+        return ea.id < eb.id;
+    }
 }
-
-#endif

@@ -76,13 +76,8 @@ namespace mlpack {
         // Initialize predicate/outcome frequence table
         // pred_count: predicate/outcome frequency table - how many times a predicate
         // has been seen with a particular outcome
-        Matrix pred_count(n_preds, vector<double>(n_outcomes));
+        Matrix pred_count(n_preds, vector<double>(n_outcomes, 0.0));
         int ei = 0, pi = 0, oi = 0;
-        for (; pi < n_preds; pi++) {
-            for (; oi < n_outcomes; oi++) {
-                pred_count[pi][oi] = 0;
-            }
-        }
 
         // Populate predicate/outcome frequency table
         ei = pi = oi = 0;

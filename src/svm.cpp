@@ -19,20 +19,6 @@
 #include <mlpack/svm.hpp>
 
 namespace mlpack {
-    double KernelQMatrix::eval_diagonal(SolutionVector &a) {
-        return cache->get_diagonal(a, this);
-    }
-
-    void KernelQMatrix::get_q(SolutionVector &a, vector<SolutionVector> &active,
-            vector<double> &buf) {
-        cache->get(a, active, buf, this);
-    }
-
-    void KernelQMatrix::get_q(SolutionVector &a, vector<SolutionVector> &active,
-            vector<SolutionVector> &inactive, vector<double> &buf) {
-        cache->get(a, active, inactive, buf, this);
-    }
-
     vector<double> SVMModel::eval(FeatureSet context) {
         
     }
@@ -58,6 +44,9 @@ namespace mlpack {
             SolutionVector sv(*eit, linear_term);
             solution_vecs.push_back(sv);
         }
+
+        shared_ptr<QMatrix> q_matrix(new BinaryInvertingKernelQMatrix(kernel,
+                    n_events, params->cache_size));
     }
 
     SVMModel BinarySVMTrainer::train(DataIndexer &di, ptree config) {

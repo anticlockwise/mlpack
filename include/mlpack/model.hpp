@@ -153,6 +153,47 @@ namespace mlpack {
 
             vector<double> eval(FeatureSet context);
     };
+
+    class SVMParameters {
+        public:
+            int svm_type;
+            int kernel_type;
+            double degree;
+            double gamma;
+            double coef0;
+
+            double cache_size;
+            double eps;
+            double c;
+            int nr_weight;
+            vector<int> weight_label;
+            vector<double> weight;
+            double nu;
+            double p;
+            int shrinking;
+            bool probability;
+    };
+
+    class SVMModel : public BaseModel {
+        public:
+            SVMParameters params;
+
+            map<FeatureSet, double> sv_map;
+            int num_svs;
+            vector<FeatureSet> sv_list;
+            vector<double> alphas;
+            double rho;
+            double obj;
+            double upper_bound_positive;
+            double upper_bound_negative;
+            double r;
+
+            vector<double> eval(FeatureSet context);
+
+            SVMModel() {}
+
+            virtual ~SVMModel() {}
+    };
 }
 
 #endif

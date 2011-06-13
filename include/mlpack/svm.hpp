@@ -16,13 +16,17 @@
  * =====================================================================================
  */
 
+#ifndef MLPACK_SVM_H
+#define MLPACK_SVM_H
+
 #include <mlpack/model.hpp>
 #include <mlpack/trainer.hpp>
 #include <mlpack/index.hpp>
 #include <mlpack/feature.hpp>
 #include <mlpack/events.hpp>
 #include <mlpack/kernel.hpp>
-#include <mlpack/cache.hpp>
+#include <mlpack/qmatrix.hpp>
+#include <mlpack/solver.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -37,165 +41,6 @@ namespace mlpack {
     enum KernelType { LINEAR = 0, POLYNOMIAL = 1, RADIAL = 2, SIGMOID = 3 };
 
     enum SVMType { C_SVC = 0, NU_SVC = 1, ONE_CLASS = 2, EPSILON_SVR = 3, NU_SVR = 4 };
-
-    enum AlphaStatus { LOWER_BOUND, UPPER_BOUND, FREE };
-
-    struct SolutionVector {
-        Event event;
-        double linear_term;
-        double alpha;
-        double g_bar;
-        double g;
-        AlphaStatus alpha_status;
-
-        SolutionVector(Event e, double lt) {
-            event = e;
-            linear_term = lt;
-        }
-
-        SolutionVector(Event e, double lt, double a) {
-            event = e;
-            linear_term = lt;
-            alpha = a;
-        }
-
-        bool is_free() {
-            return alpha_status == FREE;
-        }
-
-        bool is_shrinkable(double g_max1, double g_max2) {
-            if (is_upper_bound()) {
-                if (event.oid > 0) {
-                    return -g > g_max1;
-                } else {
-                    return -g > g_max2;
-                }
-            } else if (is_lower_bound()) {
-                if (event.oid > 0) {
-                    return g > g_max2;
-                } else {
-                    return g > g_max1;
-                }
-            } else {
-                return false;
-            }
-        }
-
-        bool is_shrinkable(double g_max1, double g_max2, double g_max3, double g_max4) {
-            if (is_upper_bound()) {
-                if (event.oid > 0) {
-                    return -g > g_max1;
-                } else {
-                    return -g > g_max4;
-                }
-            } else if (is_lower_bound()) {
-                if (event.oid > 0) {
-                    return g > g_max2;
-                } else {
-                    return g > g_max3;
-                }
-            } else {
-                return false;
-            }
-        }
-
-        bool is_upper_bound() {
-            return alpha_status == UPPER_BOUND;
-        }
-
-        bool is_lower_bound() {
-            return alpha_status == LOWER_BOUND;
-        }
-
-        double get_c(double cp, double cn) {
-            return event.oid > 0 ? cp : cn;
-        }
-    };
-
-    class SVMParameters {
-        public:
-            int svm_type;
-            int kernel_type;
-            double degree;
-            double gamma;
-            double coef0;
-
-            double cache_size;
-            double eps;
-            double c;
-            int nr_weight;
-            vector<int> weight_label;
-            vector<double> weight;
-            double nu;
-            double p;
-            int shrinking;
-            bool probability;
-    };
-
-    class QMatrix {
-        public:
-            virtual double eval_diagonal(SolutionVector &a) = 0;
-
-            virtual void get_q(SolutionVector &sva, vector<SolutionVector> &active, vector<double> &buf) = 0;
-
-            virtual void get_q(SolutionVector &sva, vector<SolutionVector> &active,
-                    vector<SolutionVector> &inactive, vector<double> &buf) = 0;
-
-            virtual void init_ranks(vector<SolutionVector> &all_examples) = 0;
-
-            virtual void maintain_cache(vector<SolutionVector> &active,
-                    vector<SolutionVector> &inactive) = 0;
-
-            virtual string perf_string() = 0;
-    };
-
-    class KernelQMatrix : public QMatrix {
-        protected:
-            shared_ptr<Kernel> kernel;
-
-            shared_ptr<RecentActivitySquareCache> cache;
-
-        public:
-            KernelQMatrix(shared_ptr<Kernel> k, int num_examples,
-                    int cache_rows) {
-                kernel = k;
-                cache = shared_ptr<RecentActivitySquareCache>(new
-                        RecentActivitySquareCache(num_examples, cache_rows));
-            }
-
-            double eval_diagonal(SolutionVector &a);
-
-            void get_q(SolutionVector &, vector<SolutionVector> &, vector<double> &);
-
-            void get_q(SolutionVector &, vector<SolutionVector> &, vector<SolutionVector> &,
-                    vector<double> &);
-
-            void init_ranks(vector<SolutionVector> &);
-
-            void maintain_cache(vector<SolutionVector> &, vector<SolutionVector> &);
-
-            string perf_string();
-
-            double evaluate(SolutionVector &a, SolutionVector &b);
-
-            virtual double compute_q(SolutionVector &a, SolutionVector &b) = 0;
-    };
-
-    class Solver {
-    };
-
-    class SVMModel : public BaseModel {
-        public:
-            shared_ptr<SVMParameters> params;
-            int nr_class;
-            int l;
-
-            vector<double> eval(FeatureSet context);
-
-            SVMModel() {}
-
-            virtual ~SVMModel() {}
-    };
 
     class BinarySVMTrainer : public Trainer<SVMModel> {
         private:
@@ -217,6 +62,25 @@ namespace mlpack {
                 params->shrinking = c.get<int>("svm.shrinking", 1);
                 params->probability = c.get<bool>("probability", false);
                 params->nr_weight = c.get<int>("svm.nr_weight", 0);
+
+                switch (params->kernel_type) {
+                    case LINEAR:
+                        kernel = shared_ptr<Kernel>(new LinearKernel);
+                        break;
+                    case POLYNOMIAL:
+                        kernel = shared_ptr<Kernel>(new PolynomialKernel(params->gamma,
+                                    params->coef0, params->degree));
+                        break;
+                    case RADIAL:
+                        kernel = shared_ptr<Kernel>(new RadialKernel(params->gamma));
+                        break;
+                    case SIGMOID:
+                        kernel = shared_ptr<Kernel>(new SigmoidNeuralKernel(params->gamma,
+                                    params->coef0));
+                        break;
+                    default:
+                        break;
+                }
                 // TODO: add weighting configuration to C -> weighted_c[i] = C * weight[j]
             }
 
@@ -230,3 +94,5 @@ namespace mlpack {
             void set_heldout_data(EventSpace events);
     };
 }
+
+#endif
