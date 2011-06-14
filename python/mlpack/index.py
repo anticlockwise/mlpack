@@ -86,7 +86,7 @@ class OnePassDataIndexer(DataIndexer):
         pindex = {}
 
         for event in stream:
-            update(event.context, pindex, counter, cutoff)
+            self._update(event.context, pindex, counter, cutoff)
 
             if event.outcome not in oindex:
                 ind = len(oindex)

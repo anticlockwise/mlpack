@@ -17,6 +17,9 @@ class Feature(object):
         self.value = value
         self.index = -1;
 
+    def __add__(self, other):
+        return Feature("", self.value + other.value)
+
 class FeatureSet(object):
     def __init__(self):
         self.feat_map = {}
@@ -66,7 +69,7 @@ class Event(object):
         l_fmap1 = len(fmap1)
         l_fmap2 = len(fmap2)
         if l_fmap1 != l_fmap2:
-            return l_fmap1 - f_fmap2
+            return l_fmap1 - l_fmap2
 
         for key in fmap1:
             if key not in fmap2:
@@ -92,31 +95,40 @@ class SequenceEventStream(object):
         self.events.append(event)
 
 class BooleanEventStream(object):
-    def __init__(self, filename):
+    def __init__(self, filename, has_outcome=True):
         self.st_file = open(filename)
 
     def __iter__(self):
         for line in st_file:
             words = SPACES.split(line.strip())
+            outcome = None
+            if self.has_outcome:
+                outcome = words[-1]
+                words = words[:-1]
             fset = []
-            for feat in words[:-1]:
+            for feat in words:
                 name = feat
                 value = 1.0
                 fset.append(Feature(name, value))
-            event = Event(fset, words[-1], 1)
+            event = Event(fset, outcome, 1)
             yield event
 
 class RealValueEventStream(object):
-    def __init__(self, filename):
+    def __init__(self, filename, has_outcome=True):
         self.st_file = open(filename)
+        self.has_outcome = has_outcome
 
     def __iter__(self):
-        for line in st_file:
+        for line in self.st_file:
             words = SPACES.split(line.strip())
+            outcome = None
+            if self.has_outcome:
+                outcome = words[-1]
+                words = words[:-1]
             fset = []
-            for feat in words[:-1]:
+            for feat in words:
                 name, value = feat.split("=")
                 value = float(value)
                 fset.append(Feature(name, value))
-            event = Event(fset, words[-1], 1)
+            event = Event(fset, outcome, 1)
             yield event
