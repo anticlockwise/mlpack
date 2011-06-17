@@ -1,4 +1,5 @@
 from mlpack.events import *
+import numpy
 
 class DataIndexer(object):
     def __init__(self):
@@ -105,7 +106,7 @@ class OnePassDataIndexer(DataIndexer):
             self.events.append(event)
 
         npreds = len(pindex)
-        self.pcounts = [0 for i in range(npreds)]
+        self.pcounts = numpy.zeros((npreds,))
         self.plabels = ["" for i in range(npreds)]
         self.olabels = ["" for i in range(len(oindex))]
         for pred, ind in pindex.items():

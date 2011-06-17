@@ -1,8 +1,9 @@
 from math import log
+import numpy
 
 class UniformPrior(object):
 	def log_prior(self, context):
-		dist = [self.r for i in range(self.n_outcomes)]
+		dist = numpy.array([self.r for i in range(self.n_outcomes)])
 		return dist
 
 	def set_labels(self, olabels, plables):

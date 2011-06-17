@@ -1,5 +1,7 @@
+import numpy
+
 class Parameters(object):
-    def __init__(self, params=[], outcomes=[]):
+    def __init__(self, params=numpy.array([]), outcomes=[]):
         self.params = params
         self.outcomes = outcomes
 
