@@ -20,7 +20,8 @@ class OpdfInteger(object):
     def generate(self):
         rand = random.random()
         for i, p in enumerate(self.probabilities):
-            if (rand -= p) < 0.0:
+            rand -= p
+            if rand < 0.0:
                 return ObservationReal(i)
         return ObservationReal(len(self.probabilities)-1)
 

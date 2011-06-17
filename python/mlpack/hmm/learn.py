@@ -1,7 +1,9 @@
 from mlpack.hmm.model import *
+import math
 import copy
 import numpy
 import itertools
+import sys
 
 ALPHA = 0
 BETA  = 1
@@ -159,6 +161,63 @@ class Clusters(object):
             for element in cluster:
                 cluster_hash[element] = i
 
+    def put(self, o, cluster_nb):
+        self.cluster_hash[o] = cluster_nb
+        self.clusters[cluster_nb].add(o)
+
+    def remove(self, o, cluster_nb):
+        self.cluster_hash[cluster_nb] = -1
+        self.clusters[cluster_nb].remove(o)
+
+    def is_in_cluster(self, o, cluster_nb):
+        return self.cluster_nb(o) == cluster_nb
+
+    def cluster_nb(self, e):
+        return self.cluster_hash[e]
+
+    def cluster(self, i):
+        return self.clusters[i]
+
+class ViterbiCalculator(object):
+    def __init__(self, oseq, hmm):
+        nb_states = hmm.nb_states()
+        len_seq = len(oseq)
+
+        self.delta = numpy.zeros((len_seq, nb_states))
+        self.psy = numpy.zeros((len_seq, nb_states))
+        self.state_seq = numpy.zeros((len_seq,))
+
+        for i in range(nb_states):
+            delta[0][i] = -math.log(hmm.get_pi(i)) - math.log(hmm.get_opdf(i).probability(oseq[0]))
+            psy[0][i] = 0
+
+        for t, o in enumerate(oseq[1:]):
+            for i in range(nb_states):
+                self.compute_step(hmm, o, t+1, i)
+
+        self.ln_probability = sys.maxint
+        for i in range(nb_states):
+            prob = self.delta[-1][i]
+            if self.ln_probability > prob:
+                self.ln_probability = prob
+                self.state_seq[-1] = i
+        self.ln_probability = -self.ln_probability
+
+        for t in range(len_seq-2, -1, -1):
+            self.state_seq[t] = self.psy[t+1][self.state_seq[t+1]]
+
+    def compute_step(self, hmm, o, t, j):
+        nb_states = hmm.nb_states()
+        min_delta, min_psy = sys.maxint, 0
+        for i in range(nb_states):
+            delta = self.delta[t-1][i] - math.log(hmm.get_aij(i, j))
+            if min_delta > delta:
+                min_delta = delta
+                min_psy = i
+
+        self.delta[t][j] = min_delta - math.log(hmm.get_opdf(j).probability(o))
+        self.psy[t][j] = min_psy
+
 class KMeansLearner(object):
     def __init__(self, nb_states, opdf_factory, sequences):
         self.sequences = sequences
@@ -193,10 +252,59 @@ class KMeansLearner(object):
         for i in range(self.nb_states):
             hmm.set_pi(i, pi[i] / len_seq)
 
+    def learn_aij(self, hmm):
+        nb_states = hmm.nb_states()
+        hmm.a = numpy.zeros((nb_states, nb_states))
+        for seq in self.sequences:
+            if len(seq) < 2:
+                continue
+
+            second_state = self.clusters.cluster_nb(seq[0])
+            for i, seq in enumerate(sequences):
+                first_state = second_state
+                second_state = self.clusters.cluster_nb(seq[i])
+
+                hmm.set_aij(first_state, second_state,
+                        hmm.get_aij(first_state, second_state)+1.0)
+
+        sums = numpy.sum(hmm.a, axis=1)
+        for i in range(nb_states):
+            s = sums[i]
+            if s == 0.0:
+                for j in range(nb_states):
+                    hmm.set_aij(i, j, 1.0 / nb_states)
+            else:
+                for j in range(nb_states):
+                    hmm.set_aij(i, j, hmm.get_aij(i, j) / s)
+
+    def learn_opdf(self, hmm):
+        nb_states = hmm.nb_states()
+        for i in range(nb_states):
+            obsseq = self.clusters.cluster(i)
+            if len(obsseq) == 0:
+                hmm.set_opdf(i, self.opdf_factory.factor())
+            else:
+                hmm.get_opdf(i).fit(obsseq)
+
+    def optimize_cluster(self, hmm):
+        modif = False
+        for seq in self.sequences:
+            vc = ViterbiCalculator(seq, hmm)
+            states = vc.state_seq
+            for i, state in enumerate(states):
+                o = seq[i]
+                if self.clusters.cluster_nb(o) != state:
+                    modif = True
+                    self.clusters.remove(o, self.clusters.cluster_nb(o))
+                    self.clusters.put(o, state)
+
+        return not modif
+
+    @classmethod
     def flat(self, sequences):
         return list(itertools.chain.from_iterable(sequences))
 
-class BaunWelchLearner(object):
+class BaumWelchLearner(object):
     def __init__(self, nb_iterations=9):
         self.nb_iterations = nb_iterations
 
@@ -236,7 +344,32 @@ class BaunWelchLearner(object):
                 nhmm.set_pi(i, nhmm.get_pi(i) + all_gamma[o][0][i] / len_seq)
 
         for i in range(nb_states):
-            pass
+            observations = KMeansLearner.flat(sequences)
+            len_obsseq = len(observations)
+            weights = numpy.zeros((len_obsseq,))
+            s, j = 0.0, 0
+            for o, seq in enumerate(sequences):
+                len_seq = len(seq)
+                for t in range(len_seq):
+                    weight[j] = all_gamma[o][t][i]
+                    s += weight[j]
+                    j += 1
+
+            j -= 1
+            while j >= 0:
+                weights[j] /= s
+                j -= 1
+
+            opdf = nhmm.get_opdf(i)
+            opdf.fit(observations, weights)
+
+        return nhmm
+
+    def learn(self, initial_hmm, sequences):
+        hmm = initial_hmm
+        for i in range(self.nb_iterations):
+            hmm = self.iterate(hmm, sequences)
+        return hmm
 
     def estimate_xi(self, sequence, fbc, hmm):
         len_seq = len(sequence)
