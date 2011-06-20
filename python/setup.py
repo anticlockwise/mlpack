@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
+from mlpack import get_version
 
 setup(
     name                 = "mlpack",
-    version              = "0.1",
+    version              = get_version(),
     packages             = find_packages(),
     include_package_data = True,
     scripts              = ["hmm.py", "maxent.py"],

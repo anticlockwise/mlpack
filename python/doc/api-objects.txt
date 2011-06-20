@@ -1,10 +1,12 @@
 mlpack	mlpack-module.html
+mlpack.get_version	mlpack-module.html#get_version
 mlpack.__package__	mlpack-module.html#__package__
 mlpack.events	mlpack.events-module.html
 mlpack.events.cmp_outcome	mlpack.events-module.html#cmp_outcome
 mlpack.events.__package__	mlpack.events-module.html#__package__
 mlpack.events.SPACES	mlpack.events-module.html#SPACES
 mlpack.hmm	mlpack.hmm-module.html
+mlpack.hmm.get_version	mlpack-module.html#get_version
 mlpack.hmm.__package__	mlpack.hmm-module.html#__package__
 mlpack.hmm.io	mlpack.hmm.io-module.html
 mlpack.hmm.io.__package__	mlpack.hmm.io-module.html#__package__
@@ -20,6 +22,7 @@ mlpack.index	mlpack.index-module.html
 mlpack.index.__package__	mlpack.index-module.html#__package__
 mlpack.index.SPACES	mlpack.index-module.html#SPACES
 mlpack.maxent	mlpack.maxent-module.html
+mlpack.maxent.get_version	mlpack-module.html#get_version
 mlpack.maxent.__package__	mlpack.maxent-module.html#__package__
 mlpack.maxent.model	mlpack.maxent.model-module.html
 mlpack.maxent.model.__package__	mlpack.maxent.model-module.html#__package__
