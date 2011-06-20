@@ -104,18 +104,18 @@ class ForwardBackwardCalculator(object):
             self.alpha[0][i] = hmm.get_pi(i) * hmm.get_opdf(i).probability(oseq[0])
         for i, o in enumerate(oseq[1:]):
             for j in range(nb_states):
-                self.compute_alpha_step(hmm, o, i, j)
+                self.compute_alpha_step(hmm, o, i+1, j)
 
     def compute_alpha_step(self, hmm, o, t, j):
         nb_states = hmm.nb_states()
         s = 0.0
         for i in range(nb_states):
-            s += alpha[t-1][i] * hmm.get_aij(i, j)
+            s += self.alpha[t-1][i] * hmm.get_aij(i, j)
         self.alpha[t][j] = s * hmm.get_opdf(j).probability(o)
 
     def compute_beta(self, hmm, oseq):
         nb_states = hmm.nb_states()
-        len_seq = len(seq)
+        len_seq = len(oseq)
         self.beta = numpy.zeros((len_seq, nb_states))
         self.beta[len_seq-1] = numpy.array([1.0 for i in range(nb_states)])
         for t in range(len_seq-2, -1, -1):
@@ -138,14 +138,14 @@ class ForwardBackwardCalculator(object):
     def get_prob(self):
         return self.probability
 
-    def compute_prob(self, hmm, oseq, flags):
+    def compute_prob(self, oseq, hmm, flags):
         self.probability = 0.0
         nb_states = hmm.nb_states()
         if ALPHA in flags:
-            probability += numpy.sum(self.alpha, axis=1)[-1]
+            self.probability += numpy.sum(self.alpha, axis=1)[-1]
         else:
             for i in range(nb_states):
-                probability += hmm.get_pi(i) * hmm.get_opdf(
+                self.probability += hmm.get_pi(i) * hmm.get_opdf(
                         i).probability(oseq[0]) * self.beta[0][i]
 
 class Clusters(object):
@@ -281,7 +281,7 @@ class KMeansLearner(object):
         nb_states = hmm.nb_states()
         for i in range(nb_states):
             obsseq = self.clusters.cluster(i)
-            if len(obsseq) == 0:
+            if not obsseq:
                 hmm.set_opdf(i, self.opdf_factory.factor())
             else:
                 hmm.get_opdf(i).fit(obsseq)
@@ -313,14 +313,15 @@ class BaumWelchLearner(object):
 
         len_seq = len(sequences)
         nb_states = hmm.nb_states()
-        all_gamma = numpy.zeros((len_seq,1,1))
+        all_gamma = numpy.zeros((len_seq,len(sequences[0])+1,hmm.nb_states()))
         aij_num   = numpy.zeros((len_seq, len_seq))
         aij_den   = numpy.zeros((len_seq,))
 
         for g, obs_seq in enumerate(sequences):
             fbc = ForwardBackwardCalculator(obs_seq, hmm, set([ALPHA, BETA]))
             xi = self.estimate_xi(obs_seq, fbc, hmm)
-            gamma = all_gamma[g] = self.estimate_gamma(xi, fbc)
+            all_gamma[g] = self.estimate_gamma(xi, fbc)
+            gamma = all_gamma[g]
 
             for i in range(nb_states):
                 for t in range(len_seq):
@@ -351,8 +352,8 @@ class BaumWelchLearner(object):
             for o, seq in enumerate(sequences):
                 len_seq = len(seq)
                 for t in range(len_seq):
-                    weight[j] = all_gamma[o][t][i]
-                    s += weight[j]
+                    weights[j] = all_gamma[o][t][i]
+                    s += weights[j]
                     j += 1
 
             j -= 1
@@ -380,8 +381,8 @@ class BaumWelchLearner(object):
         for t, o in enumerate(sequence[1:]):
             for i in range(nb_states):
                 for j in range(nb_states):
-                    xi[t][i][j] = fbc.get_alpha(t, i) * hmm.get_aij(i, j)\
-                            * hmm.get_opdf(j).probability(o)\
+                    xi[t][i][j] = fbc.get_alpha(t, i) * hmm.get_aij(i, j) \
+                            * hmm.get_opdf(j).probability(o) \
                             * fbc.get_beta(t+1, j) / probability
 
         return xi

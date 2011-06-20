@@ -2,7 +2,12 @@ import random
 from mlpack.hmm.model import ObservationReal
 
 class OpdfFactory(object):
-    def factor(self, config):
+    def __init__(self, config):
+        self.config = config
+
+    def factor(self):
+        config = self.config
+
         opdf_type = config.get("opdf", "type")
         opdf = None
         if opdf_type == "integer":

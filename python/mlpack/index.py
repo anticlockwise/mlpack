@@ -1,7 +1,13 @@
+"""
+Includes classes for indexing streamed events data for supervised-learning.
+"""
+
 from mlpack.events import *
 import numpy
 
 class DataIndexer(object):
+    """
+    """
     def __init__(self):
         self.events = []
         self.plabels = []
