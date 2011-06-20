@@ -140,7 +140,15 @@ class Event(object):
     def __eq__(self, other):
         return cmp(self, other) == 0
 
-class SequenceEventStream(object):
+class EventStream(object):
+    """
+    An event stream is an iterator that yields L{event<mlpack.events.Event>}s from
+    either a data file or manually created sequences.
+    """
+    def __iter__(self):
+        return None
+
+class SequenceEventStream(EventStream):
     """
     Event stream class for manual creation of event data set
     """

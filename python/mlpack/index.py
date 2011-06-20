@@ -7,6 +7,9 @@ import numpy
 
 class DataIndexer(object):
     """
+    Base class for all data indexers. Stores the list of events read,
+    predicate labels encountered, outcome labels encountered, number of
+    times each predicate occurred and the total number of events found.
     """
     def __init__(self):
         self.events = []
@@ -61,33 +64,64 @@ class DataIndexer(object):
         return n_uniq_events
 
     def contexts(self):
+        """
+        Return the list of events indexed
+        """
         return self.events
 
     def pred_labels(self):
+        """
+        Return the list of predicate labels in the data
+        """
         return self.plabels
 
     def pred_counts(self):
+        """
+        Return the number of times each predicate is found
+        """
         return self.pcounts
 
     def outcome_labels(self):
+        """
+        Return the list of outcome labels in the data
+        """
         return self.olabels
 
     def num_events(self):
+        """
+        Return the number of events in the data
+        """
         return self.n_events
 
 class OnePassDataIndexer(DataIndexer):
+    """
+    Simple data indexer that does one pass over the data and assign each
+    event, predicate and outcome with an integer index starting from 0.
+    """
     def __init__(self, stream, cutoff=0, sort=True):
+        """
+        Initialize this indexer with an L{event stream<mlpack.events.EventStream>}.
+
+        @type  stream: L{EventStream<mlpack.event.EventStream>}
+        @param stream: The event stream to read unindexed events from
+        @type  cutoff: number
+        @param cutoff: The cutoff threshold for predicates - i.e. if the number of times that
+                       a predicate occurred is smaller than this number, it will not be included.
+        @type  sort:   boolean
+        @param sort:   If True, the events will be sorted and merged (duplicated events will be
+                       accumulated).
+        """
         DataIndexer.__init__(self)
         print "Indexing events using cutoff %d" % cutoff
         print "Computing event counts and indexing..."
-        self.compute_event_counts(stream, cutoff)
+        self._compute_event_counts(stream, cutoff)
         print "DONE: %d in total" % len(self.events)
         print "Sorting and merging events..."
         self._sort_n_merge(self.events, sort)
         print "DONE: reduced to %d in total" % len(self.events)
         print "Indexing done."
 
-    def compute_event_counts(self, stream, cutoff):
+    def _compute_event_counts(self, stream, cutoff):
         counter = {}
         oindex = {}
         pindex = {}
