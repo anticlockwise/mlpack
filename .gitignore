@@ -1,5 +1,7 @@
 *.swp
 *.class
 *.o
+*.pyc
 maxent
 tests
+doc/api/*
