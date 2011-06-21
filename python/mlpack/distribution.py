@@ -1,8 +1,9 @@
 """
 Includes classes for the following list of distribution functions:
-	1. Gaussian - M{N(mu, sigma) = (1/sqrt(2*PI)*sigma) * exp(-(x-mu)^2/2*sigma^2)}
-	2. Exponential
-	3. Poisson
+
+1. Gaussian - :math:`N(\mu, \sigma) = ^1/_{\sqrt{2\pi\sigma^2}}\exp^{-(x-\mu)^2/2*\sigma^2}`
+2. Exponential
+3. Poisson
 """
 
 import math

@@ -9,13 +9,12 @@ class Model(object):
 		self.pmap = dict([(p, i) for i, p in enumerate(plabels)])
 
 	def best_outcome(self, outcomes):
-		"""
-		Return the outcome index with the highest probability
+		"""Return the outcome index with the highest probability
 
-		@type  outcomes: list
-		@param outcomes: The list containing the probabilities for each outcome
-		@rtype:          number
-		@return          The index of the outcome that has the highest probability
+        :type  outcomes: list
+        :param outcomes: The list containing the probabilities for each outcome
+        :rtype:          number
+        :return:         The index of the outcome that has the highest probability
 		"""
 		best = 0
 		for i, o in enumerate(outcomes):

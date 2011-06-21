@@ -10,22 +10,14 @@ SPACES = re.compile(r"\s+")
 
 def cmp_outcome(e1, e2):
     """
-    Compares L{Event<mlpack.events.Event>} objects based on their
+    Compares :py:class:`mlpack.events.Event` objects based on their
     outcome id numbers.
-
-    @type  e1: L{Event<mlpack.events.Event>}
-    @param e1: First event
-    @type  e2: L{Event<mlpack.events.Event>}
-    @param e2: Second event
-    @rtype:    number
-    @return:   -1 if e1 has a smaller outcome id, 1 if e1 has a bigger
-               outcome id, otherwise 0
     """
     return e1.oid - e2.oid
 
 class Feature(object):
     """
-    Represents a predicate in the form: C{<B{pred_name}, B{value}, B{index}>}
+    Represents a predicate in the form: ``<pred_name, value, index>``
     """
     def __init__(self, name="", value=0.0):
         self.name = name
@@ -37,7 +29,7 @@ class Feature(object):
 
 class FeatureSet(object):
     """
-    Represents a list of L{Predicate<mlpack.events.Feature>}s and includes
+    Represents a list of :py:class:`mlpack.events.Feature` and includes
     pythonic list data model methods for convenience. So you could do:
 
     >>> feat_set = FeatureSet()
@@ -72,12 +64,12 @@ class FeatureSet(object):
         """
         Get/set an attribute on this predicate set.
 
-        @type  name:  string
-        @param name:  The name of the attribute
-        @type  value: any
-        @param value: The value of the attribute
-        @rtype:       any
-        @return:      The value of the attribute to be set/get
+        :type  name:  string
+        :param name:  The name of the attribute
+        :type  value: any
+        :param value: The value of the attribute
+        :rtype:       any
+        :return:      The value of the attribute to be set/get
         """
         if value is not None:
             self.attrs[name] = value
@@ -86,10 +78,10 @@ class FeatureSet(object):
     def len_sq(self):
         """
         Compute the Euclidean length of this predicate vector -
-        M{sum(p(i)*p(i)) i = 1..N}
+        :math:`\sum_{i=1}^{N}{p_{i}^{2}}`
 
-        @rtype:  number
-        @return: The Euclidean length of this vector.
+        :rtype:  number
+        :return: The Euclidean length of this vector.
         """
         keys = self.feat_map.keys()
         def sq(key):
@@ -100,18 +92,18 @@ class FeatureSet(object):
 class Event(object):
     """
     Represents a row of data in supervised-learning, normally
-    in the form of C{<feature1> <feature2> <feature3> ... <outcome>}
+    in the form of ``<feature1> <feature2> <feature3> ... <outcome>``
     """
     def __init__(self, context=None, outcome=None, count=1):
         """
         Initialize an event.
 
-        @type  context: L{FeatureSet<mlpack.events.FeatureSet>}
-        @param context: The L{list of predicates<mlpack.events.FeatureSet>} given in the data
-        @type  outcome: string
-        @param outcome: The outcome label for this data item
-        @type  count:   number
-        @param count:   The number of times that this data item ocurred in the training data set
+        :type  context: :py:class:`mlpack.events.FeatureSet`
+        :param context: The :py:class:`mlpack.events.FeatureSet` given in the data
+        :type  outcome: string
+        :param outcome: The outcome label for this data item
+        :type  count:   number
+        :param count:   The number of times that this data item ocurred in the training data set
         """
         self.index = 0;
         self.context = context
@@ -142,7 +134,7 @@ class Event(object):
 
 class EventStream(object):
     """
-    An event stream is an iterator that yields L{event<mlpack.events.Event>}s from
+    An event stream is an iterator that yields :py:class:`mlpack.events.Event` s from
     either a data file or manually created sequences.
     """
     def __iter__(self):
@@ -162,15 +154,15 @@ class SequenceEventStream(EventStream):
         """
         Add a data item to this stream.
 
-        @type  event: L{Event<mlpack.events.Event>}
-        @param event: The event to add
+        :type  event: :py:class:`mlpack.events.Event`
+        :param event: The event to add
         """
         self.events.append(event)
 
 class BooleanEventStream(object):
     """
     Class for reading event streams from a file in the format of:
-    C{<feature1> <feature2> <feature3> ... <outcome>}
+    ``<feature1> <feature2> <feature3> ... <outcome>``
     """
     def __init__(self, filename, has_outcome=True):
         self.st_file = open(filename)
@@ -193,7 +185,7 @@ class BooleanEventStream(object):
 class RealValueEventStream(object):
     """
     Class for reading event streams from a file in the format of:
-    C{<feature1=value1> <feature2=value2> <feature3=value3> ... <outcome>}
+    ``<feature1=value1> <feature2=value2> <feature3=value3> ... <outcome>``
     """
     def __init__(self, filename, has_outcome=True):
         self.st_file = open(filename)

@@ -102,13 +102,13 @@ class OnePassDataIndexer(DataIndexer):
         """
         Initialize this indexer with an L{event stream<mlpack.events.EventStream>}.
 
-        @type  stream: L{EventStream<mlpack.event.EventStream>}
-        @param stream: The event stream to read unindexed events from
-        @type  cutoff: number
-        @param cutoff: The cutoff threshold for predicates - i.e. if the number of times that
+        :type  stream: :py:class:`mlpack.event.EventStream`
+        :param stream: The event stream to read unindexed events from
+        :type  cutoff: number
+        :param cutoff: The cutoff threshold for predicates - i.e. if the number of times that
                        a predicate occurred is smaller than this number, it will not be included.
-        @type  sort:   boolean
-        @param sort:   If True, the events will be sorted and merged (duplicated events will be
+        :type  sort:   boolean
+        :param sort:   If True, the events will be sorted and merged (duplicated events will be
                        accumulated).
         """
         DataIndexer.__init__(self)

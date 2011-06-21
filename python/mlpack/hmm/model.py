@@ -4,6 +4,8 @@ import numpy
 
 class CentroidReal(object):
     def __init__(self, o):
+        """
+        """
         self.value = o.value
 
     def reeval_add(self, e, v):
@@ -19,6 +21,8 @@ class CentroidReal(object):
 
 class CentroidVector(object):
     def __init__(self, o):
+        """
+        """
         self.value = copy.deepcopy(o)
 
     def reeval_add(self, e, v):
@@ -37,6 +41,8 @@ class CentroidVector(object):
 
 class ObservationReal(object):
     def __init__(self, value):
+        """
+        """
         self.value = value
 
     def __str__(self):
@@ -50,6 +56,8 @@ class ObservationReal(object):
 
 class ObservationVector(object):
     def __init__(self, value):
+        """
+        """
         self.value = value
 
     def __len__(self):
@@ -83,6 +91,8 @@ class ObservationVector(object):
 
 class HmmModel(object):
     def __init__(self, nb_states, opdf_factory=None):
+        """
+        """
         prob = 1.0 / nb_states
         self.pi = numpy.array([prob for i in range(nb_states)])
         self.a  = numpy.array([[prob for j in range(nb_states)] for i in range(nb_states)])

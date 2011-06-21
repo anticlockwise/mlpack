@@ -1,3 +1,7 @@
+"""
+Package for Hidden Markov Model learning algorithm implementations
+"""
+
 from mlpack import get_version
 
 __author__ = "Rongzhou Shen"

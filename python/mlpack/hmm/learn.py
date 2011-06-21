@@ -9,7 +9,14 @@ ALPHA = 0
 BETA  = 1
 
 class Cluster(object):
+    """
+    For representing a cluster in the K-Mean clustering algorithm.
+    """
     def __init__(self, e=None):
+        """
+        :type  e: :py:class:`mlpack.events.ObservationReal`
+        :param e: The first observation and initial centroid of the cluster.
+        """
         self.elements = []
         self.centroid = None
         if e is not None:
@@ -17,6 +24,11 @@ class Cluster(object):
             self.centroid = e.factor()
 
     def add(self, e):
+        """
+        Add an observation element to this cluster and update the centroid.
+
+        :param e: The observation element to be added
+        """
         if self.centroid is None:
             self.centroid = e.factor()
         else:
@@ -24,11 +36,25 @@ class Cluster(object):
         self.elements.append(e)
 
     def remove(self, i):
+        """
+        Remove an observation element to this cluster and update the centroid.
+
+        :param i: The index of the observation element to be removed
+        """
         self.centroid.reeval_remove(self.elements[i], self.elements)
         del self.elements[i]
 
 class KMeansCalculator(object):
+    """
+    Computes clusters using the K-Means algorithm.
+    """
     def __init__(self, k, elements):
+        """
+        :type  k: integer
+        :param k: The number of clusters
+        :type  elements: list
+        :param elements: The list of observation elements to be clustered
+        """
         self.clusters = []
         len_elem = len(elements)
         cluster_nb, elem_nb = 0, 0
@@ -77,6 +103,9 @@ class KMeansCalculator(object):
                             terminted = False
 
     def nearest_cluster(self, elem):
+        """
+        Find the cluster that is nearest to ``elem``.
+        """
         distance = sys.maxint
         cluster = None
         for i, c in enumerate(self.clusters):
@@ -86,10 +115,21 @@ class KMeansCalculator(object):
         return cluster
 
     def cluster(self, index):
+        """
+        Return the elements in cluster ``index``
+        """
         return self.clusters[index].elements
 
 class ForwardBackwardCalculator(object):
+    """
+    Implements Forward-backward algorithm in HMM learning.
+    """
     def __init__(self, oseq, hmm, flags):
+        """
+        :param oseq: The list of observations to perform the algorithm on
+        :param hmm:  The HMM parameters model to update
+        :param flags: Indicators for which parameters to compute: ALPHA and/or BETA
+        """
         if ALPHA in flags:
             self.compute_alpha(hmm, oseq)
         if BETA in flags:
@@ -145,11 +185,18 @@ class ForwardBackwardCalculator(object):
             self.probability += numpy.sum(self.alpha, axis=1)[-1]
         else:
             for i in range(nb_states):
-                self.probability += hmm.get_pi(i) * hmm.get_opdf(
-                        i).probability(oseq[0]) * self.beta[0][i]
+                self.probability += hmm.get_pi(i) * hmm.get_opdf(i).probability(oseq[0]) * self.beta[0][i]
+
 
 class Clusters(object):
+    """
+    Represents a group of clusters.
+    """
     def __init__(self, k, observations):
+        """
+        :param k: The number of clusters
+        :param observations: The observations that are clustered
+        """
         self.cluster_hash = {}
         self.clusters = []
 
@@ -162,24 +209,53 @@ class Clusters(object):
                 cluster_hash[element] = i
 
     def put(self, o, cluster_nb):
+        """
+        Adds an observation element to the cluster identified by ``cluster_nb``
+
+        :param o: The observation element to be added
+        """
         self.cluster_hash[o] = cluster_nb
         self.clusters[cluster_nb].add(o)
 
     def remove(self, o, cluster_nb):
+        """
+        Removes an observation element from the cluster identified by ``cluster_nb``
+
+        :param o: The observation element to be removed
+        """
         self.cluster_hash[cluster_nb] = -1
         self.clusters[cluster_nb].remove(o)
 
     def is_in_cluster(self, o, cluster_nb):
+        """
+        Check whether element ``o`` belongs to cluster ``cluster_nb``
+        """
         return self.cluster_nb(o) == cluster_nb
 
     def cluster_nb(self, e):
+        """
+        Return the cluster number of the element ``e``
+        """
         return self.cluster_hash[e]
 
     def cluster(self, i):
+        """
+        Return the cluster with index ``i``
+        """
         return self.clusters[i]
 
 class ViterbiCalculator(object):
+    """
+    Implementation of the Viterbi sequence tagging algorithm.
+    Computes the best hidden state sequence corresponding to the
+    observation sequence and the log probability of producing the
+    state sequence.
+    """
     def __init__(self, oseq, hmm):
+        """
+        :param oseq: The list of observations to perform Viterbi algorithm on
+        :param hmm:  The HMM parameters to use for the tagging
+        """
         nb_states = hmm.nb_states()
         len_seq = len(oseq)
 
@@ -188,8 +264,8 @@ class ViterbiCalculator(object):
         self.state_seq = numpy.zeros((len_seq,))
 
         for i in range(nb_states):
-            delta[0][i] = -math.log(hmm.get_pi(i)) - math.log(hmm.get_opdf(i).probability(oseq[0]))
-            psy[0][i] = 0
+            self.delta[0][i] = -math.log(hmm.get_pi(i)) - math.log(hmm.get_opdf(i).probability(oseq[0]))
+            self.psy[0][i] = 0
 
         for t, o in enumerate(oseq[1:]):
             for i in range(nb_states):
@@ -219,7 +295,17 @@ class ViterbiCalculator(object):
         self.psy[t][j] = min_psy
 
 class KMeansLearner(object):
+    """
+    Learning algorithm for computing the initial values for an HMM model
+    based on K-Means clustering.
+    """
     def __init__(self, nb_states, opdf_factory, sequences):
+        """
+        :param nb_states: The number of hidden states
+        :param opdf_factory: The factory for producing output probability
+                             distribution functions
+        :param sequences: List of observation sequences - :math:`((o_{1}, o_{2}, o_{3}), (o_{4}, o_{5}, o_{6}) ... )`
+        """
         self.sequences = sequences
         self.opdf_factory = opdf_factory
         self.nb_states = nb_states
@@ -305,7 +391,13 @@ class KMeansLearner(object):
         return list(itertools.chain.from_iterable(sequences))
 
 class BaumWelchLearner(object):
+    """
+    Baum-Welch learning algorithm for training HMM models.
+    """
     def __init__(self, nb_iterations=9):
+        """
+        :param nb_iterations: Number of iterations to perform the algorithm on
+        """
         self.nb_iterations = nb_iterations
 
     def iterate(self, hmm, sequences):
