@@ -36,8 +36,8 @@ with the state transition coefficients having the properties
 
 since they obey standard stochastic constraints.
 
-A example
------------
+Markov Model: An example
+-------------------------
 
 The above stochastic process could be called an observable Markov model since
 the output of the process is the set of states at each instant of time, where
@@ -101,5 +101,22 @@ given the model, which is
 .. math::
 
    p(O|Model, q_1 = S_{i}) = (a_{ii})^{d-1}(1 - a_{ii}) = p_{i}(d)
+
+The quantity :math:`p_{i}(d)` is the (discrete) probability density function of
+duration :math:`d` in state :math:`i`. This exponential duration density is
+characteristic of the state duration in a Markov chain. Based on :math:`p_{i}(d)`,
+we can readily calculate the expected number of observations (duration) in a
+state, conditioned on starting in that state as
+
+.. math::
+
+   \bar{d}_{i} & = \sum_{d=1}^{\infty}{dp_{i}(d)} \\
+               & = \sum_{d=1}^{\infty}{d(a_{ii})^{d-1}(1-a_{ii})} = \frac{1}{1 - a_{ii}} \\
+
+Thus the expected number of consecutive days of sunny weather, according to
+the model, is :math:`1/(0.2) = 5`; for cloudy it is 2.5; for rain it is 1.67.
+
+Extension to Hidden Markov Model
+---------------------------------
 
 
