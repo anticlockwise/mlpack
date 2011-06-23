@@ -6,12 +6,6 @@
 Welcome to MLPack
 ===================
 
-:Author: Rongzhou Shen
-:Email:  anticlockwise5@gmail.com
-
-Contents
----------
-
 .. toctree::
 
    mlintro
