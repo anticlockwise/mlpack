@@ -7,6 +7,7 @@ Welcome to MLPack
 ===================
 
 .. toctree::
+   :maxdepth: 3
 
    mlintro
    tutorial
