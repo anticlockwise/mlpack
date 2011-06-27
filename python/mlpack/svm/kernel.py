@@ -4,7 +4,7 @@ RBF        = 2
 SIGMOID    = 3
 CUSTOM     = 4
 
-class KernelParameter(object):
+class KernelParameter:
 	def __init__(self, kernel_type=LINEAR, poly_degree=3,
 			rbf_gamma=1.0, coef_lin=1, coef_const=1,
 			custom=""):
