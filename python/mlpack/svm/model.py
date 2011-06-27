@@ -4,30 +4,6 @@ from mlpack.svm.kernel import *
 CLASSIFICATION = 0
 REGRESSION     = 1
 
-class SVector(object):
-    def __init__(self, num_preds=1, kernel_id=0, factor=1.0):
-        self.preds      = numpy.zeros((num_preds,))
-        self.kernel_id  = kernel_id
-        self.factor     = factor
-        self.twonorm_sq = 0.0
-        self.attrs      = {}
-
-    def __mul__(self, other):
-        return numpy.dot(self.preds, other.preds)[0]
-
-class Document(object):
-    def __init__(self, idx=-2, y=-1, qid=0, sid=0,
-            cost_factor=0.0):
-        self.idx         = idx
-        self.preds       = SVector()
-        self.y           = y
-        self.qid         = qid
-        self.sid         = sid
-        self.cost_factor = cost_factor
-
-    def num_preds(self):
-        return len(self.preds.preds)
-
 class SvmParameters(object):
     def __init__(self):
         self.svm_type              = CLASSIFICATION
@@ -55,16 +31,15 @@ class SvmParameters(object):
         self.cost                  = None
 
 class SvmModel(object):
-    def __init__(self, num_docs=0, num_preds=0, kernel_config=None):
+    def __init__(self, num_docs=0, num_preds=0):
         self.num_sv         = 1
         self.at_upper_bound = 0
         self.b              = 0.0
-        self.supvec         = [None for i in range(num_docs+2)]
-        self.alpha          = numpy.zeros((num_docs+2,))
-        self.index          = numpy.zeros((num_docs+2,))
+        self.supvec         = None
+        self.alpha          = None
+        self.index          = None
         self.num_preds      = num_preds
         self.num_docs       = num_docs
-        self.kernel_config  = kernel_config
 
         self.loo_error      = -1.0
         self.loo_recall     = -1.0
