@@ -110,6 +110,7 @@ class Event(object):
         self.outcome = outcome
         self.count = count
         self.oid = -1
+        self.attrs = {}
 
     def __cmp__(self, other):
         fmap1 = self.context

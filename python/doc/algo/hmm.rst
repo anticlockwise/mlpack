@@ -413,5 +413,32 @@ best state sequence can now be stated as follows
       \psi_{1}(i) = 0 & \\
       \end{array}
 
+2. Recursion:
+
+   .. math::
+
+      \begin{array}{l l}
+      \delta_{t}(j) = \max_{1\le i\le n}[\delta_{t-1}(i)a_{ij}]b_{j}(O_{t}) & \quad 2 \le t \le T \\
+                                                                            & \quad 1 \le j \le n \\
+      \psi_{t}(j) = \max_{1\le i\le n}[\delta_{t-1}(i)a_{ij}]               & \quad 2 \le t \le T \\
+                                                                            & \quad 1 \le j \le n \\
+      \end{array}
+
+3. Termination:
+
+   .. math::
+
+      p^{*} = \max_{1\le i\le n}[\delta_{T}(i)]
+
+      q_{T}^{*} = \operatorname*{arg,\max}_{1\le i\le n}[\delta_{T}(i)]
+
+4. Path (state sequence) backtracking:
+
+   .. math::
+
+      q_{t}^{*} = \psi_{t+1}(q_{t+1}^{*}) \quad t = T - 1, T - 2, ..., 1
+
 Solution to Problem 3
 **********************
+
+
