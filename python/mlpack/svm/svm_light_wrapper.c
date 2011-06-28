@@ -42,9 +42,13 @@ static void free_just_model(void *ptr);
 
 static PyObject *svm_light_learn(PyObject *self, PyObject *args);
 
+static PyObject *svm_light_classify(PyObject *self, PyObject *args);
+
 static PyMethodDef PySVMLightMethods[] = {
     {"learn", svm_light_learn, METH_VARARGS,
         "learn(training_data, learn_parameters, kernel_parameters) -> model"},
+    {"classify", svm_light_classify, METH_VARARGS,
+        "classify(training_data, model) -> list"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -84,6 +88,47 @@ static void free_just_model(void *ptr)
     MODEL *obj = (MODEL *)ptr;
     free_model(obj, 0);
     free(ptr);
+}
+
+static PyObject *
+svm_light_classify(PyObject *self, PyObject *args)
+{
+    MODEL *model;
+    PyObject *modelobj, *indexer, *result;
+    long num_docs, num_preds;
+    long docnum = 0, j;
+    double dist;
+
+    DOC *doc;
+    WORD *words;
+    long queryid, slackid, wnum;
+    double costfactor, doc_label;
+
+    if (!PyArg_ParseTuple(args, "OO", &modelobj, &indexer)) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    if (indexer == Py_None || modelobj == Py_None) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    PyObject *events = PyObject_CallMethod(indexer, "contexts", NULL);
+    num_docs = (long)PyList_Size(events);
+    PyObject *plabels = PyObject_CallMethod(indexer, "pred_labels", NULL);
+    num_preds = (long)PyList_Size(plabels);
+
+    words = (WORD *)malloc(sizeof(WORD) * (num_preds + 10));
+    result = PyList_New(num_docs);
+
+    PyObject *iter = PyObject_GetIter(events);
+    PyObject *item;
+    while ((item = PyIter_Next(iter))) {
+        copy_document(words, &doc_label, &queryid, &slackid, &costfactor,
+                &wnum, num_preds + 2, item);
+        Py_DECREF(item);
+    }
 }
 
 static PyObject *
