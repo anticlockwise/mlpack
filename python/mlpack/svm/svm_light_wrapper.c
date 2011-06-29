@@ -20,7 +20,7 @@
 #include <svm_common.h>
 #include <svm_learn.h>
 
-static PyObject *find_class(PyObject *py_module_name, PyObject *py_global_name);
+static PyObject *find_class(const char *py_module_name, const char *py_global_name);
 
 static long pyattr_to_long(PyObject *obj, const char *attr_name);
 
@@ -38,7 +38,13 @@ static void copy_document(WORD *words, double *label, long *queryid,
 static void copy_parameters(LEARN_PARM *learn_parm, KERNEL_PARM *kernel_parm,
         PyObject *py_learn_parm, PyObject *py_kernel_parm);
 
-static void free_just_model(void *ptr);
+static void convert_model(MODEL *model, PyObject *py_model);
+
+static PyObject *create_document(DOC *doc);
+
+static PyObject *create_model(MODEL *model);
+
+static PyObject *create_fvector(SVECTOR *svec);
 
 static PyObject *svm_light_learn(PyObject *self, PyObject *args);
 
@@ -63,8 +69,11 @@ initsvmlight(void)
 
 // ===================================================================
 
-static PyObject *find_class(PyObject *py_module_name, PyObject *py_global_name)
+static PyObject *find_class(const char *module_name, const char *global_name)
 {
+    PyObject *py_module_name = PyString_FromString(module_name);
+    PyObject *py_global_name = PyString_FromString(global_name);
+
     PyObject *global = 0, *module;
     module = PySys_GetObject("modules");
     if (module == NULL)
@@ -80,14 +89,11 @@ static PyObject *find_class(PyObject *py_module_name, PyObject *py_global_name)
     } else {
         global = PyObject_GetAttr(module, py_global_name);
     }
-    return global;
-}
 
-static void free_just_model(void *ptr)
-{
-    MODEL *obj = (MODEL *)ptr;
-    free_model(obj, 0);
-    free(ptr);
+    Py_DECREF(py_module_name);
+    Py_DECREF(py_global_name);
+
+    return global;
 }
 
 static PyObject *
@@ -129,6 +135,8 @@ svm_light_classify(PyObject *self, PyObject *args)
                 &wnum, num_preds + 2, item);
         Py_DECREF(item);
     }
+
+    return result;
 }
 
 static PyObject *
@@ -137,13 +145,6 @@ svm_light_learn(PyObject *self, PyObject *args)
     verbosity = 1;
 
     // Import the Python SvmModel's module
-    PyObject *module = PySys_GetObject("modules");
-    PyObject *model_module_name = PyString_FromString("mlpack.svm.model");
-    PyObject *model_class_name = PyString_FromString("SvmModel");
-    PyObject *svmmodel_class = find_class(model_module_name, model_class_name);
-    Py_DECREF(model_module_name);
-    Py_DECREF(model_class_name);
-
     PyObject *indexer        = NULL;
     PyObject *params         = NULL;
     PyObject *kernel_params  = NULL;
@@ -193,61 +194,7 @@ svm_light_learn(PyObject *self, PyObject *args)
         }
 
         // TODO: Construct a Python Model object from model
-        PyObject *con_args = Py_BuildValue("{s:l,s:l}", "num_docs", num_docs, "num_preds", num_preds);
-        if (PyClass_Check(svmmodel_class)) {
-            if(!(result_model = PyInstance_New(svmmodel_class, NULL, NULL))) {
-                PyErr_Print();
-                Py_INCREF(Py_None);
-                result_model = Py_None;
-            }
-        }
-        Py_DECREF(svmmodel_class);
-
-        PyObject_SetAttrString(result_model, "num_sv",
-                Py_BuildValue("l", model->sv_num));
-        PyObject_SetAttrString(result_model, "at_upper_bound",
-                Py_BuildValue("l", model->at_upper_bound));
-        PyObject_SetAttrString(result_model, "b",
-                Py_BuildValue("d", model->b));
-
-        if (model->lin_weights) {
-            PyObject *py_linweights = PyList_New((Py_ssize_t) (num_preds+1));
-            for (i = 0; i < num_docs+2; i++) {
-                PyList_SetItem(py_linweights, (Py_ssize_t)i,
-                        Py_BuildValue("d", model->lin_weights[i]));
-            }
-            PyObject_SetAttrString(result_model, "lin_weights", py_linweights);
-        }
-
-        PyObject *py_alpha = PyList_New((Py_ssize_t) (num_docs+2));
-        for (i = 0; i < num_docs+2; i++) {
-            PyList_SetItem(py_alpha, (Py_ssize_t)i,
-                    Py_BuildValue("d", model->alpha[i]));
-        }
-        PyObject_SetAttrString(result_model, "alpha", py_alpha);
-
-        PyObject *py_index = PyList_New((Py_ssize_t) (num_docs+2));
-        for (i = 0; i < num_docs+2; i++) {
-            PyList_SetItem(py_index, (Py_ssize_t)i,
-                    Py_BuildValue("l", model->index[i]));
-        }
-        PyObject_SetAttrString(result_model, "index", py_index);
-
-        PyObject_SetAttrString(result_model, "loo_error",
-                Py_BuildValue("d", model->loo_error));
-        PyObject_SetAttrString(result_model, "loo_recall",
-                Py_BuildValue("d", model->loo_recall));
-        PyObject_SetAttrString(result_model, "loo_precision",
-                Py_BuildValue("d", model->loo_precision));
-        PyObject_SetAttrString(result_model, "xa_error",
-                Py_BuildValue("d", model->xa_error));
-        PyObject_SetAttrString(result_model, "xa_recall",
-                Py_BuildValue("d", model->xa_recall));
-        PyObject_SetAttrString(result_model, "xa_precision",
-                Py_BuildValue("d", model->xa_precision));
-
-        PyObject_SetAttrString(result_model, "maxdiff",
-                Py_BuildValue("d", model->maxdiff));
+        result_model = create_model(model);
 
         // Cleaning up
         if (kernel_cache) {
@@ -264,6 +211,161 @@ svm_light_learn(PyObject *self, PyObject *args)
         Py_INCREF(Py_None);
         result_model = Py_None;
     }
+
+    return result_model;
+}
+
+static PyObject *create_fvector(SVECTOR *svector)
+{
+    PyObject *fvector_class = find_class("mlpack.events", "FeatureSet");
+    PyObject *feature_class = find_class("mlpack.events", "Feature");
+
+    PyObject *feature_set = NULL;
+    PyObject *feature     = NULL;
+
+    WORD *words = svector->words;
+
+    if (PyClass_Check(fvector_class)) {
+        if (!(feature_set = PyInstance_New(fvector_class, NULL, NULL))) {
+            PyErr_Print();
+            Py_INCREF(Py_None);
+            feature_set = Py_None;
+            return feature_set;
+        }
+    }
+    Py_DECREF(fvector_class);
+
+    if (!PyClass_Check(feature_class)) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    int fnum = 0;
+    while (words[fnum].wnum) {
+        feature = PyInstance_New(feature_class, NULL, NULL);
+        PyObject_SetAttrString(feature, "index",
+                Py_BuildValue("l", words[fnum].wnum));
+        PyObject_SetAttrString(feature, "value",
+                Py_BuildValue("d", words[fnum].weight));
+
+        PyObject_SetItem(feature_set, PyString_FromFormat("%ld", words[fnum].wnum),
+                feature);
+
+        fnum++;
+    }
+
+    PyObject *attrs = PyDict_New();
+    PyDict_SetItemString(attrs, "twonorm_sq",
+            Py_BuildValue("d", svector->twonorm_sq));
+    PyDict_SetItemString(attrs, "kernel_id",
+            Py_BuildValue("l", svector->kernel_id));
+    PyDict_SetItemString(attrs, "factor",
+            Py_BuildValue("d", svector->factor));
+
+    PyObject_SetAttrString(feature_set, "attrs", attrs);
+
+    return feature_set;
+}
+
+static PyObject *create_document(DOC *doc)
+{
+    PyObject *event_class = find_class("mlpack.events", "Event");
+
+    PyObject *py_doc = NULL;
+
+    if (PyClass_Check(event_class)) {
+        if (!(py_doc = PyInstance_New(event_class, NULL, NULL))) {
+            PyErr_Print();
+            Py_INCREF(Py_None);
+            py_doc = Py_None;
+            return py_doc;
+        }
+    }
+    Py_DECREF(event_class);
+
+    PyObject *attrs = PyDict_New();
+
+    PyDict_SetItemString(attrs, "queryid",
+            Py_BuildValue("l", doc->queryid));
+    PyDict_SetItemString(attrs, "slackid",
+            Py_BuildValue("l", doc->slackid));
+    PyDict_SetItemString(attrs, "costfactor",
+            Py_BuildValue("d", doc->costfactor));
+
+    PyObject_SetAttrString(py_doc, "index",
+            Py_BuildValue("l", doc->docnum));
+    PyObject_SetAttrString(py_doc, "attrs", attrs);
+
+    return py_doc;
+}
+
+static PyObject *create_model(MODEL *model)
+{
+    PyObject *svmmodel_class = find_class("mlpack.svm.model", "SvmModel");
+
+    PyObject *result_model = NULL;
+
+    long num_preds = model->totwords;
+    long num_docs  = model->totdoc;
+    long i;
+
+    if (PyClass_Check(svmmodel_class)) {
+        if(!(result_model = PyInstance_New(svmmodel_class, NULL, NULL))) {
+            PyErr_Print();
+            Py_INCREF(Py_None);
+            result_model = Py_None;
+            return result_model;
+        }
+    }
+    Py_DECREF(svmmodel_class);
+
+    PyObject_SetAttrString(result_model, "num_sv",
+            Py_BuildValue("l", model->sv_num));
+    PyObject_SetAttrString(result_model, "at_upper_bound",
+            Py_BuildValue("l", model->at_upper_bound));
+    PyObject_SetAttrString(result_model, "b",
+            Py_BuildValue("d", model->b));
+
+    if (model->lin_weights) {
+        PyObject *py_linweights = PyList_New((Py_ssize_t) (num_preds+1));
+        for (i = 0; i < num_docs+2; i++) {
+            PyList_SetItem(py_linweights, (Py_ssize_t)i,
+                    Py_BuildValue("d", model->lin_weights[i]));
+        }
+        PyObject_SetAttrString(result_model, "lin_weights", py_linweights);
+    }
+
+    PyObject *py_alpha = PyList_New((Py_ssize_t) (num_docs+2));
+    for (i = 0; i < num_docs+2; i++) {
+        PyList_SetItem(py_alpha, (Py_ssize_t)i,
+                Py_BuildValue("d", model->alpha[i]));
+    }
+    PyObject_SetAttrString(result_model, "alpha", py_alpha);
+
+    PyObject *py_index = PyList_New((Py_ssize_t) (num_docs+2));
+    for (i = 0; i < num_docs+2; i++) {
+        PyList_SetItem(py_index, (Py_ssize_t)i,
+                Py_BuildValue("l", model->index[i]));
+    }
+    PyObject_SetAttrString(result_model, "index", py_index);
+
+    // TODO copy the support vectors across
+
+    PyObject_SetAttrString(result_model, "loo_error",
+            Py_BuildValue("d", model->loo_error));
+    PyObject_SetAttrString(result_model, "loo_recall",
+            Py_BuildValue("d", model->loo_recall));
+    PyObject_SetAttrString(result_model, "loo_precision",
+            Py_BuildValue("d", model->loo_precision));
+    PyObject_SetAttrString(result_model, "xa_error",
+            Py_BuildValue("d", model->xa_error));
+    PyObject_SetAttrString(result_model, "xa_recall",
+            Py_BuildValue("d", model->xa_recall));
+    PyObject_SetAttrString(result_model, "xa_precision",
+            Py_BuildValue("d", model->xa_precision));
+
+    PyObject_SetAttrString(result_model, "maxdiff",
+            Py_BuildValue("d", model->maxdiff));
 
     return result_model;
 }
@@ -303,6 +405,11 @@ static void convert_documents(DOC ***docs, double **label, PyObject *py_docs,
     }
 
     free(words);
+}
+
+static void convert_model(MODEL *model, PyObject *py_model)
+{
+
 }
 
 static void copy_document(WORD *words, double *label, long *queryid,

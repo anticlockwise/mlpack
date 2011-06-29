@@ -441,4 +441,105 @@ best state sequence can now be stated as follows
 Solution to Problem 3
 **********************
 
+In order to describe the procedure of reestimation (iterative update and
+improvement) of HMM parameters, we first define :math:`\xi_{t}(i,j)`, the
+probability of being in state :math:`S_i` at time :math:`t`, and state
+:math:`S_j` at time :math:`t+1`, given the model and the observation sequence,
+i.e.
 
+.. math::
+
+   \xi_{t}(i,j) = p(q_t=S_i, q_{t+1}=S_j|O, \lambda)
+
+It should be clear, from the definitions of the forward and backward variables,
+that we can write :math:`\xi_{t}(i,j)` in the form
+
+.. math::
+
+   \xi_{t}(i,j) & = \frac{\alpha_{t}(i)a_{ij}b_{j}(O_{t+1})\beta_{t+1}(j)}{p(O|\lambda)} \\
+                & = \frac{\alpha_{t}(i)a_{ij}b_{j}(O_{t+1})\beta_{t+1}(j)}{\sum_{i}^{N}{\sum_{j}^{N}{\alpha_{t}(i)a_{ij}b_{j}(O_{t+1})\beta_{t+1}(j)}}} \\
+
+where the numerator term if just :math:`p(q_{t}=S_i,q_{t+1}=S_j,O|\lambda)` and
+the division by :math:`p(O|\lambda)` given the desired probability measure.
+
+We have previously defined :math:`\gamma_{t}(i)` as the probability of being in
+state :math:`S_i` at time :math:`t`, given the observation sequence and the model;
+hence we can relate :math:`\gamma_{t}(i)` to :math:`\xi_{t}(i,j)` by summing
+over :math:`j`, giving
+
+.. math::
+
+   \gamma_{t}(i) = \sum_{j=1}^{N}{\xi_{t}(i,j)}
+
+If we sum :math:`\gamma_{t}(i)` over the time index :math:`t`, we get a quantity
+which can be interpreted as the expected (over time) number of times that state
+:math:`S_i`, is visited, or equivalently, the expected number of transitions
+made from state :math:`S_i` (if we exclude the time slot :math:`t=T` from the
+summation). Similarly, summation of :math:`\xi_{t}(i,j)` over :math:`t` (from
+:math:`t=1` to :math:`t=T-1`) can be interpreted as the expected number of
+transitions from state :math:`S_i` to state :math:`S_j`. That is
+
+.. math::
+
+   \sum_{t=1}^{T-1}{\gamma_{t}(i)} = \text{expected number of transitions from}\,S_{i}
+
+.. math::
+
+   \sum_{t=1}^{T-1}{\xi_{t}(i,j)} = \text{expected number of transitions form}\,S_{i}\,\text{to}\,S_{j}
+
+Using the above formulas (and the concept of counting event occurrences) we can
+give a method for reestimation of the parameters of an HMM. A set of reasonable
+reestimation formulas for :math:`\pi`, :math:`A`, and :math:`B` are
+
+.. math::
+   :label: 40a
+
+   \overline{\pi}_{i} = \text{expected number of times in state}\,S_i\,\text{at time (t=1)} = \gamma_{1}(i)
+
+.. math::
+   :label: 40b
+
+   \overline{a}_{ij} & = \frac{\text{expected number of transitions from state}\,S_i\,\text{to state}\,S_j}{\text{expected number of transitions from state}\,S_i} \\
+                     & = \frac{\sum_{t=1}^{T-1}{\xi_{t}(i,j)}}{\sum_{t=1}^{T-1}{\gamma_{t}(i)}}
+
+.. math::
+   :label: 40c
+
+   \overline{b}_{j}(k) & = \frac{\text{expected number of times in state j and observing symbol}\,v_{k}}{\text{expected number of times in state j}} \\
+                       & = \frac{\sum_{t=1,s.t.O_t=v_k}^{T}{\gamma_t(j)}}{\sum_{t=1}^{T}{\gamma_t(j)}}
+
+If we define the current model as :math:`\lambda = (A, B, \pi)`, and use that to
+compute the right-hand sides of :eq:`40a`, :eq:`40b` and :eq:`40c`, then it has
+been proven by Baum and his colleagues that either 1) the initial model :math:`\lambda`
+defines a critical point of the likelihood function, in which case
+:math:`\overline{\lambda}=\lambda`; or 2) model :math:`\overline{\lambda}` is
+more likely than model :math:`\lambda` in the sense that :math:`p(O|\overline{\lambda})>p(O|\lambda)`,
+i.e., we have found a new model :math:`\overline{\lambda}` from which the
+observation sequence is more likely to have been produced.
+
+Based on the above procedure, if we iteratively use :math:`\overline{\lambda}` in
+place of :math:`\lambda` and repeat the reestimation calculation, we then can
+improve the probability of :math:`O` being observed from the model until some
+limiting point is reached. The final result of this reestimation procedure is
+called a maximum likelihood estimate of the HMM. It should be pointed out that
+the forward-backward algorithm leads to local maxima only, and that in most
+problems of interest, the optimization surface is very complex and has many
+local maxima.
+
+The reestimation formulas of :eq:`40a`-:eq:`40c` can be derived directly by
+maximizing (using standard constrained optimization techniques) Baum's auxiliary
+function
+
+.. math::
+
+   Q(\lambda,\overline{\lambda}) = \sum_{Q}{p(Q|O,\lambda)\log{p(O,Q|\overline{\lambda})}}
+
+over :math:`\overline{\lambda}`. It has been proven by Baum and his colleagues
+that maximization of :math:`Q(\lambda, \overline{\lambda})` leads to increased
+likelihood, i.e.
+
+.. math::
+
+   \max_{\overline{\lambda}}{Q(\lambda,\overline{\lambda})} \Rightarrow p(O|\overline{\lambda}) \ge p(O|\lambda)
+
+Eventually the likelihood function converges to a critical point.
