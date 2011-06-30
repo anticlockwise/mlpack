@@ -44,7 +44,7 @@ class DiscreteFunction:
 
     def get_pos_from_indexes(self, pvs, val_indexes):
         pos, jump = 0, 1
-        for i, v in enumerate(self.variables):
+        for v in self.variables:
             k = v.index
             pos += val_indexes[k] * jump
             jump *= len(pvs[k])
@@ -161,6 +161,47 @@ class ProbabilityFunction(DiscreteFunction):
         DiscreteFunction.__init__(self, num_var, num_val)
         self.bnet = bnet
         self.props = props
+        self.observed_index = None
+        self.explanation_index = None
+        self._type = 0
+
+    def is_observed(self):
+        return self.observed_index is not None
+
+    def is_explanation(self):
+        return self.explanation_index is not None
+
+    def set_values(self, var_val_pairs, val):
+        val_indexes = numpy.zeros((len(self.bnet.prob_vars),))
+        for i, pair in enumerate(var_val_pairs):
+            index = self.bnet.prob_vars.index(pair[0])
+            pv = bnet.prob_vars[index]
+            val_indexes[index] = pv.index_of_value(pair[1])
+
+        pos = self.get_pos_from_indexes(bnet.prob_vars, val_indexes)
+
+        self.values[pos] = val
+
+    def evaluate_with_varvalue_pairs(self, var_val_pairs):
+        val_indexes = numpy.zeros((len(self.bnet.prob_vars),))
+        for i, pair in enumerate(var_val_pairs):
+            index = self.bnet.prob_vars.index(pair[0])
+            pv = bnet.prob_vars[index]
+            val_indexes[index] = pv.index_of_value(pair[1])
+
+        return self.evaluate_with_indexes(val_indexes)
+
+    def evaluate_with_indexes(self, indexes):
+        return self.evaluate(self.bnet.prob_vars, indexes)
+
+    def get_pos_from_indexes_simple(self, indexes):
+        return self.get_pos_from_indexes(self.bnet.prob_vars, indexes)
+
+    def expected_value(self, df):
+        return numpy.dot(self.values, df.values)
+
+    def posterior_expected_value(self, df):
+        return numpy.dot(self.values, df.values) / numpy.sum(self.values)
 
 class BayesNet:
     def __init__(self, name=None, num_var=0, num_func=0, props={}):
@@ -168,3 +209,16 @@ class BayesNet:
         self.prob_vars = [None for i in range(num_var)]
         self.prob_funcs = [None for i in range(num_func)]
         self.props = props
+
+    def get_function(self, pv):
+        for pf in self.prob_funcs:
+            if pv.index == pf.variables[0].index:
+                return pf
+        return None
+
+    def index_of_variable(self, var):
+        indexes = [i for i, v in enumerate(self.prob_vars) if v.name == var]
+        return indexes[0] if indexes else None
+
+    def get_all_evidence(self):
+        pass
