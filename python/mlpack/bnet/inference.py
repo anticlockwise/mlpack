@@ -1,6 +1,9 @@
 import numpy
 from mlpack.bnet.network import *
 
+MAX_OUT = 2
+SUM_OUT = 1
+
 EMPTY       = 0
 REDUCED     = 1
 DISTRIBUTED = 2
@@ -15,6 +18,9 @@ MINIMUM_WEIGHT = 2
 
 CONNECTED_VARIABLES = 0
 AFFECTING_VARIABLES = 1
+
+PHASE_ONE = 0
+PHASE_TWO = 1
 
 class DSeparation:
     def __init__(self, bnet):
@@ -64,7 +70,8 @@ class DSeparation:
             if subscript < 0:
                 for i in range(nvertices):
                     if self._adj(i, v, flag):
-                        if not self.below[i] and not self._is_separator(i, flag):
+                        if not self.below[i] \
+                           and not self._is_separator(i, flag):
                             self.below[i] = True
                             stack.append((i, -1))
                 for j in range(nvertices):
@@ -78,7 +85,8 @@ class DSeparation:
                 if self._is_separator(v, flag):
                     for i in range(nvertices):
                         if self._adj(i, v, flag):
-                            if not self._is_separator(i, flag) and not self.below[i]:
+                            if not self._is_separator(i, flag) \
+                               and not self.below[i]:
                                 self.below[i] = True
                                 stack.append((i, -1))
                 else:
@@ -90,8 +98,10 @@ class DSeparation:
 
     def _adj(self, index_from, index_to, flag):
         pf = None
-        if flag == CONNECTED_VARIABLES or \
-                (flag == AFFECTING_VARIABLES and index_to < len(self.bnet.prob_funcs) and index_from < len(self.bnet.prob_funcs)):
+        if flag == CONNECTED_VARIABLES \
+           or (flag == AFFECTING_VARIABLES \
+               and index_to < len(self.bnet.prob_funcs) \
+               and index_from < len(self.bnet.prob_funcs)):
             for f in self.bnet.prob_funcs:
                 if f.variables[0].index == index_to:
                     pf = f
@@ -110,7 +120,7 @@ class DSeparation:
 
     def _is_separator(self, i, flag):
         if flag == CONNECTED_VARIABLES or \
-                (flag == AFFECTING_VARIABLES and i < len(self.bnet.prob_funcs):
+                (flag == AFFECTING_VARIABLES and i < len(self.bnet.prob_funcs)):
             return self.bnet.prob_vars[i].is_observed()
         return False
 
@@ -151,10 +161,219 @@ class Ordering:
             return self.heuristic_order(vars_to_order, objective_index,
                     self.order_type)
 
+    def user_order(self, vars_to_order, objective_index):
+        non_explanation_vars = []
+        explanation_vars     = []
+
+        for i, pv in enumerate(vars_to_order):
+            if pv._type == TRANSPARENT:
+                continue
+
+            if self.explanation_status == IGNORE_EXPLANATION:
+                is_var_explanation_flag = False
+            elif self.explanation_status == EXPLANATION:
+                is_var_explanation_flag = pv.is_explanation()
+            elif self.explanation_status == FULL_EXPLANATION:
+                is_var_explanation_flag = True
+
+            if pv.is_observed():
+                is_var_explanation_flag = False
+
+            if is_var_explanation_flag:
+                explanation_vars.append(pv.name)
+            else:
+                non_explanation_vars.append(pv.name)
+
+        order = [None for i in range(len(non_explanation_vars)+len(explanation_vars))]
+
+        if explanation_vars:
+            k = 0
+            for i, v in enumerate(non_explanation_vars):
+                order[k] = v
+                k += 1
+            for i, v in enumerate(explanation_vars):
+                order[k] = v
+                k += 1
+        else:
+            k = 0
+            for i, v in enumerate(non_explanation_vars):
+                order[k] = v
+                if order[k] != self.bnet.prob_vars[objective_index].name:
+                    k += 1
+            order[k] = self.bnet.prob_vars[objective_index].name
+
+        return order
+
+    def heuristic_order(self, vo, objective_index,
+            ordering_type):
+        num_vars_in_phase_two = 0
+
+        vars_to_order = []
+        elimination_order = []
+
+        phase_markers = [PHASE_ONE for v in self.bnet.prob_vars]
+        for i, pv in enumerate(vo):
+            if pv.is_observed():
+                elimination_order.append(pv)
+            elif pv._type != TRANSPARENT:
+                vars_to_order.append(pv)
+                if self.explanation_status == FULL_EXPLANATION \
+                        or (self.explanation_status == EXPLANATION and pv.is_explanation()):
+                    phase_markers[pv.index] = PHASE_TWO
+                    num_vars_in_phase_two += 1
+
+        if num_vars_in_phase_two == 0:
+            phase_markers[objective_index] = PHASE_TWO
+            num_vars_in_phase_two = 1
+
+        vectors = [[] for v in self.bnet.prob_vars]
+        for i, pv in enumerate(vars_to_order):
+            pf = self.bnet.get_function(pv)
+            vectors[pv.index].append(pv)
+            self.interconnect(self.bnet, vectors, pf.variables)
+
+        if num_vars_in_phase_two == len(vars_to_order):
+            phase = PHASE_TWO
+        else:
+            phase = PHASE_ONE
+
+        for i, pv in enumerate(vars_to_order):
+            min_value, min_index = -1, -1
+            num_vars_in_phase = 0
+
+            for j, vec in enumerate(vectors):
+                if vec and phase_markers[j] == phase:
+                    num_vars_in_phase += 1
+                    value = self.obtain_value(vec, ordering_type)
+                    if value < min_value or min_index == -1:
+                        min_index = j
+                        min_value = value
+
+            if phase == PHASE_ONE and num_vars_in_phase == 1:
+                phase = PHASE_TWO
+
+            pv_min = self.bnet.prob_vars[min_index]
+            elimination_order.append(pv)
+
+            for j, vec in enumerate(vectors):
+                if vec:
+                    vec.remove(pv_min)
+
+            neighbours = [p in vectors[min_index]]
+            self.interconnect(self.bnet, vectors, neighbours)
+
+            vectors[min_index] = None
+
+        ret_ordering = [p.name for p in elimination_order]
+        return ret_ordering
+
+    def obtain_value(self, vec, ordering_type):
+        value = 0
+        if ordering_type == MINIMUM_WEIGHT:
+            value = prod([len(v) for v in vec])
+        return value
+
+    def interconnect(self, bnet, vectors, variables):
+        len_vars = len(variables)
+        for i in range(len_vars-1):
+            for j in range(i+1, len_vars):
+                self.interconnect_single(bnet, vectors, variables[i],
+                        variables[j])
+
+    def interconnect_single(self, bnet, vectors, pvi, pvj):
+        vi = vectors[pvi.index]
+        vj = vectors[pvj.index]
+
+        if vi is None or vj is None:
+            return
+
+        if pvj not in vi:
+            vi.append(pvj)
+        elif pvi not in vj:
+            vj.append(pvi)
+
 class BucketTree:
     def __init__(self, ordering, dpc=False):
         self.ordering = ordering
         self.dpc = dpc
+        self.bucket_tree = None
+
+        self.bnet = ordering.bnet
+        self.explanation_status = ordering.explanation_status
+        order = ordering.order
+
+        self.active_bucket = 0
+
+        i = self.bnet.index_of_variable(order[-1])
+        pv = self.bnet.prob_vars[i]
+        if pv.is_observed():
+            pf = self.transform_to_probability_function(self.bnet, pv)
+            self.bucket_tree = [Bucket(self, pv, dpc)]
+            self.insert(pf)
+        else:
+            bucket_tree = [Bucket(self, \
+                    self.bnet.prob_vars[self.bnet.index_of_variable(v)], dpc) \
+                    for v in order]
+            markers = [False for v in self.bnet.prob_vars]
+            for i, o in enumerate(order):
+                markers[self.bnet.index_of_variable(o)] = True
+
+            for i, f in enumerate(self.bnet.prob_funcs):
+                if markers[f.get_index(0)]:
+                    pf = self.check_evidence(f)
+                    if pf:
+                        aux_pv = f.prob_vars[0]
+                        self.insert(pf, aux_pv.index not in pf)
+
+        #ut = self.bnet.get_utility_function()
+        #if ut:
+            #self.insert(ut)
+
+    def transform_to_probability_function(self, bnet, pv):
+        pf = ProbabilityFunction(1, len(pv), bnet, None)
+        pf.variables[0] = pv
+        index = pv.observed_index
+        pf.values[index] = 1.0
+        return pf
+
+    def check_evidence(self, pf):
+        markers = [False for v in self.bnet.prob_vars]
+        n = self.build_evidence_markers(pf, markers)
+
+        if n == 0:
+            return None
+
+        if n == len(pf.variables):
+            return pf
+
+        joined_indexes = [0 for i in range(n)]
+        j, v = 0, 1
+        for i, v in enumerate(pf.variables):
+            if markers[v.index]:
+                joined_indexes[j] = v.index
+                j += 1
+                v *= len(self.bnet.prob_vars[v.index])
+
+        new_pf = ProbabilityFunction(n, v, self.bnet, None)
+        for i in range(n):
+            new_pf.variables[i] = self.bnet.prob_vars[joined_indexes[i]]
+
+        self.check_evidence_loop(new_pf, pf)
+
+        return new_pf
+
+    def build_evidence_markers(self, pf, markers):
+        for v in pf.variables:
+            markers[v.index] = True
+        for i, v in enumerate(self.bnet.prob_vars):
+            if v.is_observed():
+                markers[i] = False
+
+        n = len(filter(lambda x: x, markers))
+        return n
+
+    def check_evidence_loop(self, new_pf, pf):
+        pass
 
 class Bucket:
     def __init__(self, bucket_tree, variable, dpc=False):

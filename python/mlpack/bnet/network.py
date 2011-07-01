@@ -1,5 +1,9 @@
 import numpy
-from itertools import prod
+
+CHANCE      = 0
+TRANSPARENT = 1
+
+prod = lambda x, y: y *= x
 
 class DiscreteVariable:
     def __init__(self, name=None, index=-1, values=None):
@@ -155,6 +159,8 @@ class ProbabilityVariable(DiscreteVariable):
         DiscreteVariable.__init__(self, name, index, values)
         self.bnet = bnet
         self.props = props
+		self.observed_index = None
+		self.explanation_index = None
 
 class ProbabilityFunction(DiscreteFunction):
     def __init__(self, num_var, num_val, bnet=None, props={}):
@@ -163,7 +169,10 @@ class ProbabilityFunction(DiscreteFunction):
         self.props = props
         self.observed_index = None
         self.explanation_index = None
-        self._type = 0
+        self._type = CHANCE
+
+	def get_index(self, i):
+		return self.variables[i].index
 
     def is_observed(self):
         return self.observed_index is not None
